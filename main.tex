@@ -41,7 +41,7 @@
 \newcommand{\enola}{\textsc{ENOLA}}
 \newcommand{\etal}{\textit{et al.}}
 
-\title{\vspace{-1.2em}\textbf{SaTC: CORE: Small: Verifiable and Compartmentalized Trust Anchors for Secure Embedded Systems}\vspace{-1.0em}}
+\title{\vspace{-1.2em}\textbf{SaTC: CORE: Small: VEST: Verifiable Trust Establishment on Embedded Systems}\vspace{-1.0em}}
 \author{}
 \date{}
 
@@ -49,264 +49,274 @@
 	\maketitle
 	\vspace{-2.0em}
 	
-	% ==========================================================
-	\section{Overview and Objectives}
-	% ==========================================================
-	Embedded and cyber-physical systems increasingly control security- and safety-critical tasks in smart homes, industrial automation, medical devices, transportation, and public infrastructure. Their software stacks are often written in memory-unsafe languages, run with limited isolation, and interact directly with sensors and actuators. Trusted execution environments (TEEs) and remote attestation can provide a foundation for trustworthy execution, but existing embedded TEEs remain fixed, opaque, monolithic, and overprivileged. A single bug in trusted firmware, a peripheral driver, or a security-sensitive application can compromise the whole trusted domain. At the same time, modern microcontrollers are becoming more complex and increasingly include caches, predictors, hardware cryptographic extensions, and fast state transitions, raising new questions about control-flow attacks and microarchitectural leakage.
-	
-	This project will develop \sys, a new foundation for \emph{verifiable and compartmentalized trust anchors} for resource-constrained embedded systems. The central hypothesis is that embedded trust can be strengthened by combining four complementary ideas: reconfigurable hardware-based trusted execution, low-overhead runtime behavior attestation, fine-grained compartmentalization inside the trusted domain, and systematic analysis and mitigation of transient-execution leakage on modern MCUs. The project builds on two preliminary foundations. First, \byotee{} demonstrates that System-on-Chip FPGAs can be used to construct customizable enclaves with dedicated softcore CPUs, memory, and peripherals. Second, \enola{} demonstrates that hardware-assisted control-flow attestation can reduce attestation evidence size and measurement overhead for embedded firmware. This proposal integrates these foundations and extends them in new directions.
-	
-	\begin{figure}[t]
-		\centering
-		\includegraphics[width=0.98\linewidth]{figs/fig01_research_vision.png}
-		\caption{Proposed research vision. \byotee{} provides the reconfigurable trusted execution substrate, \enola{} provides runtime behavior evidence, compartmentalization limits the blast radius of trusted-code bugs, and transient-resilience validates and hardens the microarchitectural assumptions of modern embedded trust anchors.}
-		\label{fig:vision}
-	\end{figure}
-	
-	\textbf{Goal.} The goal of this project is to enable a remote verifier to establish end-to-end trust in embedded systems: the correct hardware enclave was configured, the correct software was loaded, the expected control-flow, data-flow, and I/O behavior occurred, trusted components remained isolated under least privilege, and secrets did not leak through practical microarchitectural channels.
-	
-	\textbf{Research thrusts.} As shown in Figure~\ref{fig:vision}, the project has four thrusts:
-	\begin{itemize}
-		\item \textbf{Thrust 1: Reconfigurable and Attestable Embedded TEEs.} We will synthesize minimal FPGA-based trust anchors from application policies and remotely attest their hardware/software configuration.
-		\item \textbf{Thrust 2: Runtime Behavior Attestation.} We will extend control-flow attestation toward realistic embedded execution, including interrupts, RTOS tasks, data-flow dependencies, and peripheral I/O.
-		\item \textbf{Thrust 3: Compartmentalized Trust Anchors.} We will decompose trusted firmware, drivers, cryptographic services, and applications into least-privilege compartments and attest compartment behavior.
-		\item \textbf{Thrust 4: Transient-Resilient Embedded Isolation.} We will systematically measure transient-execution primitives on modern MCUs and design defenses for embedded TEEs and attestation systems.
-	\end{itemize}
-	
-	\textbf{Expected impact.} The project will produce new algorithms, mechanisms, and open-source prototypes for embedded trusted execution, runtime attestation, intra-TEE compartmentalization, and transient leakage analysis. The resulting tools will help secure embedded platforms used in medical, industrial, automotive, and IoT settings.
-	
-	% ==========================================================
-	\section{Motivation and Research Challenges}
-	% ==========================================================
-	\subsection{Why embedded trust anchors need to change}
-	Existing embedded TEEs are useful because they isolate security-sensitive code from a rich execution environment (REE), but they do not fully solve the trust problem for modern embedded systems. First, their hardware trusted computing base (TCB) is typically fixed at design time. A trusted domain may include unnecessary peripherals, broad memory privileges, and privileged drivers that violate least privilege. Second, many TEEs are proprietary or architecture-specific, limiting independent inspection and customization. Third, a TEE is often treated as a single trusted box. This ignores the fact that TEE software is commonly written in C/C++ and may contain bugs. Fourth, runtime attestation often proves only that the expected binary was loaded, not that the firmware followed the expected behavior. Finally, modern MCUs are no longer uniformly simple. Caches, branch prediction, fast secure/non-secure transitions, and hardware cryptographic features improve performance but may change the microarchitectural threat model.
-	
-	\subsection{Preliminary foundations from the dissertation}
-	\textbf{FPGA-based customizable TEEs.} \byotee{} explores the use of SoC FPGAs as configurable trust anchors. The key insight is that an FPGA can instantiate application-specific enclaves with dedicated softcore CPUs, BRAM-based memory, peripherals, and interconnects. Because co-resident enclaves need not share processors or caches, the design can reduce several attack surfaces associated with monolithic TEEs. Figure~\ref{fig:byotee} shows the \byotee{} architecture and workflow, where a development-time toolchain generates protected FPGA images and security-sensitive applications (SSAs), and runtime enclaves execute isolated workloads.
-	
-	\begin{figure}[t]
-		\centering
-		\includegraphics[width=0.98\linewidth]{figs/fig02_byotee_architecture.png}
-		\caption{Preliminary foundation: \byotee{} architecture and workflow. The framework creates multiple FPGA-based enclaves with customized hardware resources, firmware, and peripheral bindings.}
-		\label{fig:byotee}
-	\end{figure}
-	
-	\textbf{Hardware-assisted control-flow attestation.} \enola{} addresses the challenge of attesting embedded firmware execution without transmitting unbounded traces. It uses a bounded trace representation and hardware-assisted pointer-authentication measurements to create compact evidence of runtime behavior. Figure~\ref{fig:enola} shows the \enola{} workflow, where compiler instrumentation, secure measurement, and verifier-side reconstruction are combined to attest execution paths.
-	
-	\begin{figure}[t]
-		\centering
-		\includegraphics[width=0.92\linewidth]{figs/fig04_enola_workflow.png}
-		\caption{Preliminary foundation: \enola{} workflow for efficient control-flow attestation. The proposed project extends this foundation toward interrupts, RTOS execution, data-flow evidence, I/O-flow evidence, and compartment-aware attestation.}
-		\label{fig:enola}
-	\end{figure}
-	
-	\subsection{Scientific questions}
-	The proposed work is driven by four research questions. \textbf{RQ1:} How can embedded devices construct minimal and attestable trusted execution environments after deployment? \textbf{RQ2:} How can a verifier check not only which code was loaded, but also how the code executed and what I/O path it used? \textbf{RQ3:} How can a trusted domain be internally compartmentalized so that one vulnerable driver or library cannot compromise the full TEE? \textbf{RQ4:} How should embedded trust anchors be designed if modern MCUs support transient-execution leakage primitives?
-	
-	% ==========================================================
-	\section{System and Threat Model}
-	% ==========================================================
-	\textbf{System model.} We consider embedded systems that contain a microcontroller or embedded processor, optional FPGA fabric, memory protection hardware, secure boot support, hardware cryptographic primitives, and peripheral interfaces. The protected workloads include bare-metal firmware, RTOS tasks, trusted services, sensor-processing applications, and security-sensitive accelerators. The SoC FPGA model includes a hard processor system, an FPGA configuration module, secure key storage, FPGA fabric, BRAM, interconnects, and peripheral I/O. Figure~\ref{fig:socfpga} illustrates the relevant architecture.
-	
-	\begin{figure}[t]
-		\centering
-		\includegraphics[width=0.88\linewidth]{figs/fig03_soc_fpga_architecture.png}
-		\caption{SoC FPGA architecture used as the hardware basis for reconfigurable trust anchors. The FPGA configuration module and FPGA-side secure storage form the root of trust for loading protected bitstreams.}
-		\label{fig:socfpga}
-	\end{figure}
-	
-	\textbf{Adversary model.} The adversary may compromise the normal-world software stack, including applications, RTOS components, drivers, hypervisors, or host operating systems. The adversary may exploit memory corruption bugs, malicious peripheral inputs, confused-deputy interfaces, or vulnerabilities in trusted components. The adversary may attempt control-flow hijacking, data tampering, I/O spoofing, compartment escape, or microarchitectural leakage. We assume standard cryptographic primitives are secure and that device roots of trust are provisioned correctly. Physical attacks and invasive hardware modification are outside the primary scope, though the project will consider realistic deployment constraints such as limited memory, limited FPGA resources, and timing-sensitive workloads.
-	
-	\textbf{Security goals.} The system should provide confidentiality and integrity for trusted workloads, isolation among enclaves and compartments, attestation of hardware and software configuration, attestation of runtime behavior, and practical protection against transient leakage at trusted boundaries.
-	
-	% ==========================================================
-	\section{Thrust 1: Reconfigurable and Attestable Embedded TEEs}
-	% ==========================================================
-	\subsection{Problem statement}
-	A fixed TEE gives every trusted application the same hardware privilege boundary. This is misaligned with embedded workloads, where different applications require different peripherals, timing constraints, memory sizes, and threat models. This thrust asks: \emph{Can we synthesize and attest minimal hardware/software trust anchors from application-specific requirements?}
-	
-	\subsection{Task 1.1: Policy-guided enclave synthesis}
-	We will design a policy language for specifying enclave requirements, including CPU type, memory size, peripheral access, accelerator modules, firmware libraries, communication buffers, and attestation requirements. A synthesis tool will translate these policies into FPGA enclave designs. The tool will minimize the hardware/software TCB by including only required resources. For example, an audio-processing SSA should not inherit access to a camera peripheral, and a cryptographic service should not inherit display or network drivers.
-	
-	\subsection{Task 1.2: Hardware/software configuration attestation}
-	We will design attestation mechanisms that cover the FPGA bitstream, enclave topology, firmware image, loaded application, memory map, peripheral bindings, and host-enclave communication channels. The attestation report will bind the evidence to a fresh nonce from the verifier and to a device key rooted in secure configuration. The report will allow the verifier to check that the configured enclave matches the expected application policy.
-	
-	\subsection{Task 1.3: Safe enclave reconfiguration}
-	Many embedded deployments need updates after manufacturing. We will investigate safe reconfiguration mechanisms that allow enclaves to be updated, replaced, or specialized without violating isolation. The key challenge is to prevent stale trust assumptions: a verifier should not accept a runtime report generated under a previous enclave topology. We will bind reconfiguration events to attestation epochs and design rollback-resistant metadata.
-	
-	\subsection{Technical challenges and approach}
-	The main challenge is maintaining a small TCB while supporting general-purpose software. We will combine FPGA-level isolation, BRAM-based memory, narrow shared-memory channels, and hardware-enforced peripheral bindings. We will also develop static checks to detect unsafe interconnects, untrusted debug modules, DMA paths, and hidden peripheral routes. The toolchain will emit a machine-readable enclave manifest used by both the hardware generator and the verifier.
-	
-	\subsection{Expected outcomes}
-	This thrust will produce a policy-driven enclave synthesis tool, a hardware/software manifest format, and a configuration attestation protocol for reconfigurable embedded trust anchors.
-	
-	% ==========================================================
-	\section{Thrust 2: Runtime Behavior Attestation}
-	% ==========================================================
-	\subsection{Problem statement}
-	Configuration attestation proves that a trusted environment and binary were loaded, but it does not prove that the binary followed an intended path or used the intended I/O. This thrust asks: \emph{Can embedded systems provide compact, low-overhead runtime evidence of control-flow, data-flow, and I/O behavior?}
-	
-	\subsection{Task 2.1: Control-flow attestation for realistic embedded execution}
-	We will extend \enola{} to support long-running firmware, interrupts, callbacks, and RTOS tasks. A major challenge is that embedded systems are event-driven; interrupt service routines and scheduler events introduce control-flow transfers that are not captured by a simple application CFG. We will build an interrupt-aware trace model that distinguishes normal branches, function returns, exception entries, exception returns, context switches, and trusted-compartment transitions.
-	
-	\subsection{Task 2.2: Hardware-assisted measurement and verification}
-	We will use hardware cryptographic primitives, such as pointer authentication or lightweight MAC engines, to reduce measurement overhead. The measurement scheme will generate compact evidence whose size is bounded by program structure rather than raw runtime length. The verifier will use static CFG information, attestation manifests, and runtime evidence to reconstruct or validate allowed execution behavior.
-	
-	\subsection{Task 2.3: Data-flow and I/O-flow evidence}
-	Control-flow evidence alone may be insufficient: an execution can follow a legal path but operate on maliciously substituted data. We will extend attestation to cover security-critical data dependencies and peripheral interactions. Examples include sensor input hashes, actuator command commitments, DMA buffer identities, and enclave-to-peripheral routing evidence. The output report will bind the software path to the I/O path.
-	
-	\subsection{Expected outcomes}
-	This thrust will produce algorithms and prototypes for control-flow, data-flow, and I/O-flow attestation that are suitable for constrained embedded devices.
-	
-	% ==========================================================
-	\section{Thrust 3: Compartmentalized Trust Anchors}
-	% ==========================================================
-	\subsection{Problem statement}
-	A monolithic trusted domain remains fragile: a single bug in a parser, driver, crypto wrapper, or application can compromise all trusted assets. This thrust asks: \emph{Can embedded trust anchors enforce least privilege internally and attest that compartment boundaries were respected?}
-	
-	\begin{figure}[t]
-		\centering
-		\includegraphics[width=0.95\linewidth]{figs/fig05_compartmentalized_trust_anchor.png}
-		\caption{Proposed compartmentalized trust anchor. Trusted services are decomposed into compartments with explicit memory, key, and peripheral privileges. A compartment monitor enforces transitions and provides compartment-aware evidence to the verifier.}
-		\label{fig:compartment}
-	\end{figure}
-	
-	\subsection{Task 3.1: Decomposing trusted software}
-	We will decompose trusted software into compartments such as attestation logic, cryptographic services, peripheral drivers, parsers, application logic, and communication buffers. Each compartment will have a minimal set of privileges. For example, a camera driver may access the camera peripheral and input buffer but not the attestation key, while the attestation compartment may access measurement state but not raw sensor streams unless explicitly authorized.
-	
-	\subsection{Task 3.2: Hardware-assisted compartment isolation}
-	We will investigate several enforcement mechanisms: MPU-based isolation on MCUs, TrustZone-M state separation, FPGA memory firewalls, compiler-based software fault isolation, and hybrid mechanisms. The design will optimize for the constraints of embedded systems, including small memory, limited MPU regions, interrupt latency, and deterministic timing.
-	
-	\subsection{Task 3.3: Compartment-aware attestation}
-	We will extend runtime reports to include compartment identity, compartment transitions, memory access policies, peripheral access evidence, and violations. This creates a stronger claim than conventional TEE attestation: the verifier can check not only that the trusted software ran, but also that its internal privilege boundaries were enforced during execution.
-	
-	\subsection{Expected outcomes}
-	This thrust will produce a compartmentalization framework for embedded trust anchors and a verifier protocol for checking compartment-level behavior.
-	
-	% ==========================================================
-	\section{Thrust 4: Transient-Resilient Embedded Isolation}
-	% ==========================================================
-	\subsection{Problem statement}
-	Many security designs for MCUs assume simple in-order execution and limited microarchitectural state. Newer MCUs, however, increasingly include caches, branch prediction, prefetching, and other performance features. This thrust asks: \emph{Do emerging MCUs support transient-execution leakage primitives, and how should embedded trust anchors defend against them?}
-	
-	\begin{figure}[t]
-		\centering
-		\includegraphics[width=0.95\linewidth]{figs/fig06_mcu_transient_attack_measurement_loop.png}
-		\caption{Proposed transient-attack measurement loop for MCUs. The framework tests cache timing, speculative cache loading, branch predictor behavior, transient windows, and secret-dependent cache footprints under controlled configurations.}
-		\label{fig:transient}
-	\end{figure}
-	
-	\subsection{Task 4.1: Measuring transient primitives on MCUs}
-	We will build a measurement framework for cache timing, branch prediction, speculative cache loading, transient execution windows, and secret-dependent cache footprints. The framework will configure relevant architectural features, trigger candidate transient behaviors, measure timing through cycle counters, and evaluate whether secrets can influence observable microarchitectural state.
-	
-	\subsection{Task 4.2: Leakage analysis of embedded TEEs and attestation}
-	We will analyze trusted boundaries, including TrustZone-M transitions, FPGA enclave interfaces, attestation measurement routines, compartment switches, and peripheral handlers. The goal is to determine whether secrets from trusted compartments can influence shared caches, predictors, or timing-visible memory state.
-	
-	\subsection{Task 4.3: Defense mechanisms}
-	We will design defenses such as cache partitioning, cache flushing, speculation barriers, constant-time enclave interfaces, compiler instrumentation, enclave scheduling rules, and FPGA-side physical isolation. We will compare defenses in terms of security coverage, runtime overhead, code size, and deployability.
-	
-	\subsection{Expected outcomes}
-	This thrust will produce a systematic methodology for evaluating transient leakage on modern MCUs and a set of defenses for transient-resilient embedded trust anchors.
-	
-	% ==========================================================
-	\section{Integration: End-to-End Verifiable Embedded Trust}
-	% ==========================================================
-	The four thrusts will be integrated into a single attestation architecture. A verifier will send a fresh challenge to the device. The device will respond with a composite report:
-	\[
-	\mathsf{Report}=\langle H_{bitstream}, H_{enclave}, H_{firmware}, H_{app}, IO_{binding}, C_{comp}, T_{runtime}, D_{critical}, nonce\rangle_{\sigma},
-	\]
-	where $H_{bitstream}$ captures the FPGA configuration, $H_{enclave}$ captures the enclave topology, $H_{firmware}$ and $H_{app}$ capture loaded software, $IO_{binding}$ captures peripheral routes, $C_{comp}$ captures compartment policy and transitions, $T_{runtime}$ captures control-flow evidence, $D_{critical}$ captures selected data-flow and I/O-flow evidence, and $nonce$ prevents replay. The verifier checks this evidence against an application policy.
-	
-	The integrated system will allow stronger claims than current embedded attestation mechanisms. Rather than merely proving that a binary was loaded, it will prove that a minimal trusted execution substrate was configured, the expected software ran, trusted components remained compartmentalized, and the runtime behavior was consistent with the expected control-flow and I/O policy.
-	
-	% ==========================================================
-	\section{Evaluation Plan}
-	% ==========================================================
-	We will evaluate \sys{} along five dimensions.
-	
-	\textbf{Security evaluation.} We will test resistance to control-flow hijacking, return-oriented programming, malicious peripheral input, data tampering, I/O spoofing, compartment escape, and transient leakage. We will use synthetic attacks, real firmware vulnerabilities when available, and microbenchmarks for cache/speculation behavior.
-	
-	\textbf{Performance evaluation.} We will measure runtime overhead, attestation latency, interrupt latency, context-switch overhead, compartment-switch overhead, and reconfiguration cost. Measurements will be taken on representative Cortex-M boards and SoC FPGA platforms.
-	
-	\textbf{Memory and hardware cost.} We will report code size, RAM usage, stack usage, FPGA LUT/FF/BRAM/DSP utilization, and power/energy overhead. For FPGA enclaves, we will measure the cost of softcore CPUs, memory, interconnects, peripheral wrappers, and hardware attestation modules.
-	
-	\textbf{Scalability evaluation.} We will evaluate increasingly complex bare-metal applications, RTOS workloads, multi-compartment trusted services, and multi-enclave FPGA configurations. We will compare evidence size and verification time against trace-based and hash-chain-based baselines.
-	
-	\textbf{Deployability evaluation.} We will demonstrate case studies in sensor processing, secure audio or camera pipelines, cryptographic services, and embedded control logic. The goal is to evaluate whether the mechanisms can be deployed under realistic resource and timing constraints.
-	
-	\begin{figure}[t]
-		\centering
-		\includegraphics[width=0.92\linewidth]{figs/fig07_seb_enclave_layout.png}
-		\caption{Dissertation figure used in the evaluation plan: SSA execution block and enclave layout. This motivates end-to-end attestation of loaded applications, memory layout, and execution boundaries.}
-		\label{fig:seb}
-	\end{figure}
-	
-	% ==========================================================
-	\section{Preliminary Results and Feasibility}
-	% ==========================================================
-	The feasibility of the project is supported by the dissertation prototypes. \byotee{} implemented an FPGA-based trusted execution infrastructure with hardware generation, firmware, SSA packaging, and attestation mechanisms. It demonstrated the construction of multiple isolated enclaves and evaluated hardware resource utilization, software TCB size, and execution performance. \enola{} implemented compiler instrumentation and runtime support for efficient control-flow attestation on Cortex-M systems. Figure~\ref{fig:pass} shows the compiler pass pipeline used in the preliminary system.
-	
-	\begin{figure}[t]
-		\centering
-		\includegraphics[width=0.90\linewidth]{figs/fig08_enola_compiler_pass_pipeline.png}
-		\caption{Dissertation figure used as a preliminary foundation: \enola{} compiler pass pipeline. The proposed work extends this pipeline for compartment-aware, interrupt-aware, data-flow-aware, and I/O-aware attestation.}
-		\label{fig:pass}
-	\end{figure}
-	
-	The preliminary systems demonstrate that the proposed research is technically feasible. The new intellectual contributions will come from integrating configurable hardware trust anchors with runtime behavior evidence, decomposing trusted software into attestable compartments, and validating the microarchitectural assumptions of modern embedded trust anchors.
-	
-	% ==========================================================
-	\section{Intellectual Merit}
-	% ==========================================================
-	This project will advance embedded systems security in four ways. First, it will develop new abstractions and tools for synthesizing application-specific trusted execution environments from policies. Second, it will develop scalable runtime attestation algorithms that bind control-flow, data-flow, and I/O-flow behavior to a trusted execution substrate. Third, it will introduce compartmentalization as a first-class property of embedded trust anchors and provide evidence that compartment boundaries were enforced. Fourth, it will establish a systematic methodology for studying and defending against transient-execution leakage on modern MCUs. Together, these contributions will move the field from static trusted execution toward verifiable trusted behavior.
-	
-	% ==========================================================
-	\section{Broader Impacts}
-	% ==========================================================
-	The proposed research will improve the security of embedded and cyber-physical systems used in healthcare, transportation, manufacturing, public infrastructure, and smart environments. The project will produce open-source tools, benchmarks, and educational materials when possible. The research will support graduate and undergraduate training in embedded security, hardware/software co-design, trustworthy computing, and microarchitectural security. The project will also contribute hands-on modules for courses and workshops on MCU security, FPGA-based trusted execution, and runtime attestation.
-	
-	% ==========================================================
-	\section{Project Timeline and Management Plan}
-	% ==========================================================
-	\begin{table}[h]
-		\centering
-		\caption{Planned project timeline.}
-		\label{tab:timeline}
-		\begin{tabular}{p{0.15\linewidth}p{0.77\linewidth}}
-			\toprule
-			\textbf{Year} & \textbf{Milestones} \\
-			\midrule
-			Year 1 & Policy language, enclave synthesis prototype, baseline configuration attestation, initial transient-measurement harness. \\
-			Year 2 & Runtime control-flow attestation for interrupts and RTOS tasks; first compartment isolation prototype. \\
-			Year 3 & Data-flow and I/O-flow evidence; compartment-aware attestation; transient leakage evaluation and defenses. \\
-			Year 4 & Integrated prototype, end-to-end evaluation, open-source release, educational modules, and transition documentation. \\
-			\bottomrule
-		\end{tabular}
-	\end{table}
-	
-	\textbf{Risk mitigation.} If FPGA resources are insufficient for some workloads, we will evaluate smaller enclave profiles and hybrid MCU/FPGA enforcement. If certain MCUs do not exhibit measurable transient leakage, the methodology will still characterize the absence of primitives under tested configurations and identify which architectural features are sufficient to prevent leakage. If full data-flow attestation is too expensive, we will focus on security-critical data dependencies and I/O commitments.
-	
-	% ==========================================================
-	\section{Results from Prior NSF Support}
-	% ==========================================================
-	% Include this section only if the PI/co-PI has prior NSF support within the NSF-required window.
-	% Otherwise remove or replace with the correct text according to the current PAPPG.
-	No results from prior NSF support are included in this draft template. This section should be replaced with the PI's required prior-support statement, if applicable.
-	
-	% ==========================================================
-	\section*{References Cited}
-	% ==========================================================
-	\small
-	\begin{thebibliography}{99}
-		\bibitem{sgx} V. Costan and S. Devadas. Intel SGX explained. \emph{IACR Cryptology ePrint Archive}, 2016.
-		\bibitem{trustzone} ARM. Arm TrustZone technology for the Armv8-M architecture. Technical documentation.
-		\bibitem{cflat} T. Abera et al. C-FLAT: Control-flow attestation for embedded systems software. \emph{ACM CCS}, 2016.
-		\bibitem{lofat} A. Ibrahim et al. LO-FAT: Low-overhead control flow attestation in hardware. \emph{DAC}, 2017.
-		\bibitem{oat} A. V. Davi et al. OAT: Attesting operation integrity of embedded devices. \emph{IEEE S\&P}, 2017.
-		\bibitem{blast} A. Bognar et al. Control-flow attestation: Are we there yet? \emph{USENIX Security}, 2022.
-		\bibitem{spectre} P. Kocher et al. Spectre attacks: Exploiting speculative execution. \emph{IEEE S\&P}, 2019.
-		\bibitem{mirai} M. Antonakakis et al. Understanding the Mirai botnet. \emph{USENIX Security}, 2017.
-		\bibitem{stuxnet} N. Falliere, L. O. Murchu, and E. Chien. W32.Stuxnet dossier. Symantec, 2011.
-	\end{thebibliography}
-	
+% ==========================================================
+\section{Overview and Objectives}
+% ==========================================================
+Embedded and cyber-physical systems increasingly control security- and safety-critical tasks in smart homes, industrial automation, medical devices, transportation, and public infrastructure. Their software stacks are often written in memory-unsafe languages, run with limited isolation, and interact directly with sensors and actuators. Trusted execution environments (TEEs) and remote attestation can provide a foundation for trustworthy execution, but existing embedded TEEs remain fixed, opaque, monolithic, and overprivileged. A single bug in trusted firmware, a periphseral driver, or a security-sensitive application can compromise the whole trusted domain. At the same time, modern microcontrollers are becoming more complex and increasingly include caches, predictors, hardware cryptographic extensions, and fast state transitions, raising new questions about control-flow attacks and microarchitectural leakage.
+
+This project will develop \sys, a new foundation for \emph{verifiable and compartmentalized trust anchors} for resource-constrained embedded systems. The central hypothesis is that embedded trust can be strengthened by combining four complementary ideas: reconfigurable hardware-based trusted execution, low-overhead runtime behavior attestation, fine-grained compartmentalization inside the trusted domain, and systematic analysis and mitigation of transient-execution leakage on modern MCUs. The project builds on two preliminary foundations. First, \byotee{} demonstrates that System-on-Chip FPGAs can be used to construct customizable enclaves with dedicated softcore CPUs, memory, and peripherals. Second, \enola{} demonstrates that hardware-assisted control-flow attestation can reduce attestation evidence size and measurement overhead for embedded firmware. This proposal integrates these foundations and extends them in new directions.
+
+
+
+\textbf{Goal.} The goal of this project is to enable a remote verifier to establish end-to-end trust in embedded systems: the correct hardware enclave was configured, the correct software was loaded, the expected control-flow, data-flow, and I/O behavior occurred, trusted components remained isolated under least privilege, and secrets did not leak through practical microarchitectural channels.
+
+\textbf{Research thrusts.} As shown in Figure~\ref{fig:vision}, the project has four thrusts:
+\begin{itemize}
+	\item \textbf{Thrust 1: Reconfigurable and Attestable Embedded TEEs.} We will synthesize minimal FPGA-based trust anchors from application policies and remotely attest their hardware/software configuration.
+	\item \textbf{Thrust 2: Runtime Behavior Attestation.} We will extend control-flow attestation toward realistic embedded execution, including interrupts, RTOS tasks, data-flow dependencies, and peripheral I/O.
+	\item \textbf{Thrust 3: Compartmentalized Trust Anchors.} We will decompose trusted firmware, drivers, cryptographic services, and applications into least-privilege compartments and attest compartment behavior.
+	\item \textbf{Thrust 4: Transient-Resilient Embedded Isolation.} We will systematically measure transient-execution primitives on modern MCUs and design defenses for embedded TEEs and attestation systems.
+\end{itemize}
+
+\textbf{Expected impact.} The project will produce new algorithms, mechanisms, and open-source prototypes for embedded trusted execution, runtime attestation, intra-TEE compartmentalization, and transient leakage analysis. The resulting tools will help secure embedded platforms used in medical, industrial, automotive, and IoT settings.
+
+
+\begin{figure}[t]
+	\centering
+	\includegraphics[width=0.98\linewidth]{figs/VEST_thrusts.pdf}
+	\caption{Proposed research trusts of VEST}
+	\label{fig:thrusts}
+\end{figure}
+
+\subsection{Proposed Research}
+As illustrated in Figure~\ref{fig:thrusts}, this proposal presents a three-thrust research agenda for establishing, maintaining, and recovering trust throughout the lifecycle of embedded-system execution. The overarching goal is to enable a remote verifier to determine not only whether a system was initialized with the intended trusted components, but also whether it continued to execute according to its authorized behavior and whether trust could be preserved following a localized compromise.
+
+The proposed research addresses the fragmentation of existing security mechanisms, which typically treat trusted execution, runtime attestation, compartmentalization, and recovery as separate problems. We will instead develop a unified trust framework that connects the system’s initial hardware and software configuration, its runtime behavior, its isolation boundaries, and its recovery state. Through this framework, trust becomes a continuously maintained property rather than a one-time decision made at boot. The three thrusts therefore focus on establishing a verifiable trust foundation, maintaining that trust through scalable runtime evidence, and preserving it through compromise containment and selective recovery.
+
+\textbf{Thrust 1: Composable Trust Establishment for Embedded Platforms.}
+The first thrust will develop an architecture-neutral foundation for defining and establishing trust in heterogeneous embedded systems. We will introduce a trust descriptor that specifies the hardware components, trusted firmware, applications, compartments, peripherals, accelerators, communication interfaces, and security policies that collectively form the system's trusted computing base. The descriptor will allow a remote verifier to reason explicitly about what is included within the trust boundary rather than relying on an opaque, platform-specific TCB.
+
+Based on this abstraction, we will investigate platform-specific mechanisms for constructing and measuring trusted execution environments. On FPGA-based SoCs, we will explore configurable enclaves containing application-specific processors, memories, peripherals, and accelerators. On Cortex-M platforms, we will realize trust anchors using secure boot, TrustZone, protected cryptographic keys, and verified security configurations. We will then develop compositional attestation protocols that bind the platform configuration, trusted loader, application software, security-critical data, and compartment policy into a unified measurement. This thrust will establish a common verifier-visible basis for trust across both configurable and fixed embedded architectures.
+
+\textbf{Thrust 2: Scalable Runtime Trust Verification.}
+The second thrust will develop mechanisms for maintaining trust after the initial platform and software configuration has been established. Static attestation can show which components were loaded, but it cannot determine whether an attacker subsequently redirected control flow, corrupted runtime state, abused an interrupt handler, or violated an authorized compartment interface. We will therefore develop scalable runtime evidence that captures security-relevant execution behavior and is interpreted under the trust descriptor established in Thrust 1.
+
+The proposed evidence model will represent control-flow behavior, compartment transitions, interrupt execution, scheduling events, and selected input/output interactions. To support long-running and bandwidth-constrained embedded systems, we will investigate linear-space evidence representations whose communication cost is bounded by the static program and compartment structure rather than the length of execution. Cortex-M85 will serve as the primary implementation platform because its pointer-authentication, branch-target identification, TrustZone, and privileged register mechanisms provide a practical basis for hardware-assisted evidence generation. However, the evidence semantics and verifier algorithms will remain architecture-neutral and applicable to other embedded platforms. Compiler instrumentation, protected measurement state, cryptographic chaining, and remote verification will be jointly designed to provide efficient and trustworthy runtime validation.
+
+\textbf{Thrust 3: Compartmentalized Trust Preservation and Recovery.}
+The third thrust will investigate how established trust can be preserved when part of an embedded system is compromised. We will develop verification-aware compartmentalization techniques that jointly consider memory isolation, peripheral ownership, authorized control-flow boundaries, evidence precision, and recovery dependencies. The trust descriptor from Thrust 1 will define the resources and interfaces assigned to each compartment, while the runtime evidence from Thrust 2 will allow the verifier to determine whether those boundaries were respected during execution.
+
+On Cortex-M platforms, we will investigate the secure composition of MPU-based spatial isolation with pointer authentication and branch-target identification. The design will use authenticated compartment transitions, protected return paths, per-domain cryptographic state, and interrupt-safe switching mechanisms to prevent unauthorized cross-compartment behavior. When runtime evidence indicates a violation, the system will identify the smallest affected trust domain, revoke or rotate its security state, reset or replace the compromised component, reconstruct its authorized interfaces, and generate fresh evidence for remote re-attestation. This selective recovery model will allow unaffected components to preserve their trusted status rather than forcing a complete system restart.
+
+Together, the three thrusts form a continuous trust lifecycle. Thrust 1 defines and establishes the intended hardware and software trust substrate across heterogeneous embedded architectures. Thrust 2 maintains trust by generating and verifying scalable evidence of runtime behavior. Thrust 3 preserves system-wide trust by containing localized compromise and selectively restoring affected components. The resulting framework will enable a remote verifier to determine that the correct platform configuration was instantiated, the expected software and compartment behavior occurred, and trusted service can continue safely following a localized failure or attack.
+% ==========================================================
+\section{Motivation and Research Challenges}
+% ==========================================================
+\subsection{Why embedded trust anchors need to change}
+Existing embedded TEEs are useful because they isolate security-sensitive code from a rich execution environment (REE), but they do not fully solve the trust problem for modern embedded systems. First, their hardware trusted computing base (TCB) is typically fixed at design time. A trusted domain may include unnecessary peripherals, broad memory privileges, and privileged drivers that violate least privilege. Second, many TEEs are proprietary or architecture-specific, limiting independent inspection and customization. Third, a TEE is often treated as a single trusted box. This ignores the fact that TEE software is commonly written in C/C++ and may contain bugs. Fourth, runtime attestation often proves only that the expected binary was loaded, not that the firmware followed the expected behavior. Finally, modern MCUs are no longer uniformly simple. Caches, branch prediction, fast secure/non-secure transitions, and hardware cryptographic features improve performance but may change the microarchitectural threat model.
+
+\subsection{Preliminary foundations from the dissertation}
+\textbf{FPGA-based customizable TEEs.} \byotee{} explores the use of SoC FPGAs as configurable trust anchors. The key insight is that an FPGA can instantiate application-specific enclaves with dedicated softcore CPUs, BRAM-based memory, peripherals, and interconnects. Because co-resident enclaves need not share processors or caches, the design can reduce several attack surfaces associated with monolithic TEEs. Figure~\ref{fig:byotee} shows the \byotee{} architecture and workflow, where a development-time toolchain generates protected FPGA images and security-sensitive applications (SSAs), and runtime enclaves execute isolated workloads.
+
+\begin{figure}[t]
+	\centering
+	\includegraphics[width=0.98\linewidth]{figs/fig02_byotee_architecture.png}
+	\caption{Preliminary foundation: \byotee{} architecture and workflow. The framework creates multiple FPGA-based enclaves with customized hardware resources, firmware, and peripheral bindings.}
+	\label{fig:byotee}
+\end{figure}
+
+\textbf{Hardware-assisted control-flow attestation.} \enola{} addresses the challenge of attesting embedded firmware execution without transmitting unbounded traces. It uses a bounded trace representation and hardware-assisted pointer-authentication measurements to create compact evidence of runtime behavior. Figure~\ref{fig:enola} shows the \enola{} workflow, where compiler instrumentation, secure measurement, and verifier-side reconstruction are combined to attest execution paths.
+
+\begin{figure}[t]
+	\centering
+	\includegraphics[width=0.92\linewidth]{figs/fig04_enola_workflow.png}
+	\caption{Preliminary foundation: \enola{} workflow for efficient control-flow attestation. The proposed project extends this foundation toward interrupts, RTOS execution, data-flow evidence, I/O-flow evidence, and compartment-aware attestation.}
+	\label{fig:enola}
+\end{figure}
+
+\subsection{Scientific questions}
+The proposed work is driven by four research questions. \textbf{RQ1:} How can embedded devices construct minimal and attestable trusted execution environments after deployment? \textbf{RQ2:} How can a verifier check not only which code was loaded, but also how the code executed and what I/O path it used? \textbf{RQ3:} How can a trusted domain be internally compartmentalized so that one vulnerable driver or library cannot compromise the full TEE? \textbf{RQ4:} How should embedded trust anchors be designed if modern MCUs support transient-execution leakage primitives?
+
+% ==========================================================
+\section{System and Threat Model}
+% ==========================================================
+\textbf{System model.} We consider embedded systems that contain a microcontroller or embedded processor, optional FPGA fabric, memory protection hardware, secure boot support, hardware cryptographic primitives, and peripheral interfaces. The protected workloads include bare-metal firmware, RTOS tasks, trusted services, sensor-processing applications, and security-sensitive accelerators. The SoC FPGA model includes a hard processor system, an FPGA configuration module, secure key storage, FPGA fabric, BRAM, interconnects, and peripheral I/O. Figure~\ref{fig:socfpga} illustrates the relevant architecture.
+
+\begin{figure}[t]
+	\centering
+	\includegraphics[width=0.88\linewidth]{figs/fig03_soc_fpga_architecture.png}
+	\caption{SoC FPGA architecture used as the hardware basis for reconfigurable trust anchors. The FPGA configuration module and FPGA-side secure storage form the root of trust for loading protected bitstreams.}
+	\label{fig:socfpga}
+\end{figure}
+
+\textbf{Adversary model.} The adversary may compromise the normal-world software stack, including applications, RTOS components, drivers, hypervisors, or host operating systems. The adversary may exploit memory corruption bugs, malicious peripheral inputs, confused-deputy interfaces, or vulnerabilities in trusted components. The adversary may attempt control-flow hijacking, data tampering, I/O spoofing, compartment escape, or microarchitectural leakage. We assume standard cryptographic primitives are secure and that device roots of trust are provisioned correctly. Physical attacks and invasive hardware modification are outside the primary scope, though the project will consider realistic deployment constraints such as limited memory, limited FPGA resources, and timing-sensitive workloads.
+
+\textbf{Security goals.} The system should provide confidentiality and integrity for trusted workloads, isolation among enclaves and compartments, attestation of hardware and software configuration, attestation of runtime behavior, and practical protection against transient leakage at trusted boundaries.
+
+% ==========================================================
+\section{Thrust 1: Reconfigurable and Attestable Embedded TEEs}
+% ==========================================================
+\subsection{Problem statement}
+A fixed TEE gives every trusted application the same hardware privilege boundary. This is misaligned with embedded workloads, where different applications require different peripherals, timing constraints, memory sizes, and threat models. This thrust asks: \emph{Can we synthesize and attest minimal hardware/software trust anchors from application-specific requirements?}
+
+\subsection{Task 1.1: Policy-guided enclave synthesis}
+We will design a policy language for specifying enclave requirements, including CPU type, memory size, peripheral access, accelerator modules, firmware libraries, communication buffers, and attestation requirements. A synthesis tool will translate these policies into FPGA enclave designs. The tool will minimize the hardware/software TCB by including only required resources. For example, an audio-processing SSA should not inherit access to a camera peripheral, and a cryptographic service should not inherit display or network drivers.
+
+\subsection{Task 1.2: Hardware/software configuration attestation}
+We will design attestation mechanisms that cover the FPGA bitstream, enclave topology, firmware image, loaded application, memory map, peripheral bindings, and host-enclave communication channels. The attestation report will bind the evidence to a fresh nonce from the verifier and to a device key rooted in secure configuration. The report will allow the verifier to check that the configured enclave matches the expected application policy.
+
+\subsection{Task 1.3: Safe enclave reconfiguration}
+Many embedded deployments need updates after manufacturing. We will investigate safe reconfiguration mechanisms that allow enclaves to be updated, replaced, or specialized without violating isolation. The key challenge is to prevent stale trust assumptions: a verifier should not accept a runtime report generated under a previous enclave topology. We will bind reconfiguration events to attestation epochs and design rollback-resistant metadata.
+
+\subsection{Technical challenges and approach}
+The main challenge is maintaining a small TCB while supporting general-purpose software. We will combine FPGA-level isolation, BRAM-based memory, narrow shared-memory channels, and hardware-enforced peripheral bindings. We will also develop static checks to detect unsafe interconnects, untrusted debug modules, DMA paths, and hidden peripheral routes. The toolchain will emit a machine-readable enclave manifest used by both the hardware generator and the verifier.
+
+\subsection{Expected outcomes}
+This thrust will produce a policy-driven enclave synthesis tool, a hardware/software manifest format, and a configuration attestation protocol for reconfigurable embedded trust anchors.
+
+% ==========================================================
+\section{Thrust 2: Runtime Behavior Attestation}
+% ==========================================================
+\subsection{Problem statement}
+Configuration attestation proves that a trusted environment and binary were loaded, but it does not prove that the binary followed an intended path or used the intended I/O. This thrust asks: \emph{Can embedded systems provide compact, low-overhead runtime evidence of control-flow, data-flow, and I/O behavior?}
+
+\subsection{Task 2.1: Control-flow attestation for realistic embedded execution}
+We will extend \enola{} to support long-running firmware, interrupts, callbacks, and RTOS tasks. A major challenge is that embedded systems are event-driven; interrupt service routines and scheduler events introduce control-flow transfers that are not captured by a simple application CFG. We will build an interrupt-aware trace model that distinguishes normal branches, function returns, exception entries, exception returns, context switches, and trusted-compartment transitions.
+
+\subsection{Task 2.2: Hardware-assisted measurement and verification}
+We will use hardware cryptographic primitives, such as pointer authentication or lightweight MAC engines, to reduce measurement overhead. The measurement scheme will generate compact evidence whose size is bounded by program structure rather than raw runtime length. The verifier will use static CFG information, attestation manifests, and runtime evidence to reconstruct or validate allowed execution behavior.
+
+\subsection{Task 2.3: Data-flow and I/O-flow evidence}
+Control-flow evidence alone may be insufficient: an execution can follow a legal path but operate on maliciously substituted data. We will extend attestation to cover security-critical data dependencies and peripheral interactions. Examples include sensor input hashes, actuator command commitments, DMA buffer identities, and enclave-to-peripheral routing evidence. The output report will bind the software path to the I/O path.
+
+\subsection{Expected outcomes}
+This thrust will produce algorithms and prototypes for control-flow, data-flow, and I/O-flow attestation that are suitable for constrained embedded devices.
+
+% ==========================================================
+\section{Thrust 3: Compartmentalized Trust Anchors}
+% ==========================================================
+\subsection{Problem statement}
+A monolithic trusted domain remains fragile: a single bug in a parser, driver, crypto wrapper, or application can compromise all trusted assets. This thrust asks: \emph{Can embedded trust anchors enforce least privilege internally and attest that compartment boundaries were respected?}
+
+\begin{figure}[t]
+	\centering
+	\includegraphics[width=0.95\linewidth]{figs/fig05_compartmentalized_trust_anchor.png}
+	\caption{Proposed compartmentalized trust anchor. Trusted services are decomposed into compartments with explicit memory, key, and peripheral privileges. A compartment monitor enforces transitions and provides compartment-aware evidence to the verifier.}
+	\label{fig:compartment}
+\end{figure}
+
+\subsection{Task 3.1: Decomposing trusted software}
+We will decompose trusted software into compartments such as attestation logic, cryptographic services, peripheral drivers, parsers, application logic, and communication buffers. Each compartment will have a minimal set of privileges. For example, a camera driver may access the camera peripheral and input buffer but not the attestation key, while the attestation compartment may access measurement state but not raw sensor streams unless explicitly authorized.
+
+\subsection{Task 3.2: Hardware-assisted compartment isolation}
+We will investigate several enforcement mechanisms: MPU-based isolation on MCUs, TrustZone-M state separation, FPGA memory firewalls, compiler-based software fault isolation, and hybrid mechanisms. The design will optimize for the constraints of embedded systems, including small memory, limited MPU regions, interrupt latency, and deterministic timing.
+
+\subsection{Task 3.3: Compartment-aware attestation}
+We will extend runtime reports to include compartment identity, compartment transitions, memory access policies, peripheral access evidence, and violations. This creates a stronger claim than conventional TEE attestation: the verifier can check not only that the trusted software ran, but also that its internal privilege boundaries were enforced during execution.
+
+\subsection{Expected outcomes}
+This thrust will produce a compartmentalization framework for embedded trust anchors and a verifier protocol for checking compartment-level behavior.
+
+% ==========================================================
+\section{Thrust 4: Transient-Resilient Embedded Isolation}
+% ==========================================================
+\subsection{Problem statement}
+Many security designs for MCUs assume simple in-order execution and limited microarchitectural state. Newer MCUs, however, increasingly include caches, branch prediction, prefetching, and other performance features. This thrust asks: \emph{Do emerging MCUs support transient-execution leakage primitives, and how should embedded trust anchors defend against them?}
+
+\begin{figure}[t]
+	\centering
+	\includegraphics[width=0.95\linewidth]{figs/fig06_mcu_transient_attack_measurement_loop.png}
+	\caption{Proposed transient-attack measurement loop for MCUs. The framework tests cache timing, speculative cache loading, branch predictor behavior, transient windows, and secret-dependent cache footprints under controlled configurations.}
+	\label{fig:transient}
+\end{figure}
+
+\subsection{Task 4.1: Measuring transient primitives on MCUs}
+We will build a measurement framework for cache timing, branch prediction, speculative cache loading, transient execution windows, and secret-dependent cache footprints. The framework will configure relevant architectural features, trigger candidate transient behaviors, measure timing through cycle counters, and evaluate whether secrets can influence observable microarchitectural state.
+
+\subsection{Task 4.2: Leakage analysis of embedded TEEs and attestation}
+We will analyze trusted boundaries, including TrustZone-M transitions, FPGA enclave interfaces, attestation measurement routines, compartment switches, and peripheral handlers. The goal is to determine whether secrets from trusted compartments can influence shared caches, predictors, or timing-visible memory state.
+
+\subsection{Task 4.3: Defense mechanisms}
+We will design defenses such as cache partitioning, cache flushing, speculation barriers, constant-time enclave interfaces, compiler instrumentation, enclave scheduling rules, and FPGA-side physical isolation. We will compare defenses in terms of security coverage, runtime overhead, code size, and deployability.
+
+\subsection{Expected outcomes}
+This thrust will produce a systematic methodology for evaluating transient leakage on modern MCUs and a set of defenses for transient-resilient embedded trust anchors.
+
+% ==========================================================
+\section{Integration: End-to-End Verifiable Embedded Trust}
+% ==========================================================
+The four thrusts will be integrated into a single attestation architecture. A verifier will send a fresh challenge to the device. The device will respond with a composite report:
+\[
+\mathsf{Report}=\langle H_{bitstream}, H_{enclave}, H_{firmware}, H_{app}, IO_{binding}, C_{comp}, T_{runtime}, D_{critical}, nonce\rangle_{\sigma},
+\]
+where $H_{bitstream}$ captures the FPGA configuration, $H_{enclave}$ captures the enclave topology, $H_{firmware}$ and $H_{app}$ capture loaded software, $IO_{binding}$ captures peripheral routes, $C_{comp}$ captures compartment policy and transitions, $T_{runtime}$ captures control-flow evidence, $D_{critical}$ captures selected data-flow and I/O-flow evidence, and $nonce$ prevents replay. The verifier checks this evidence against an application policy.
+
+The integrated system will allow stronger claims than current embedded attestation mechanisms. Rather than merely proving that a binary was loaded, it will prove that a minimal trusted execution substrate was configured, the expected software ran, trusted components remained compartmentalized, and the runtime behavior was consistent with the expected control-flow and I/O policy.
+
+% ==========================================================
+\section{Evaluation Plan}
+% ==========================================================
+We will evaluate \sys{} along five dimensions.
+
+\textbf{Security evaluation.} We will test resistance to control-flow hijacking, return-oriented programming, malicious peripheral input, data tampering, I/O spoofing, compartment escape, and transient leakage. We will use synthetic attacks, real firmware vulnerabilities when available, and microbenchmarks for cache/speculation behavior.
+
+\textbf{Performance evaluation.} We will measure runtime overhead, attestation latency, interrupt latency, context-switch overhead, compartment-switch overhead, and reconfiguration cost. Measurements will be taken on representative Cortex-M boards and SoC FPGA platforms.
+
+\textbf{Memory and hardware cost.} We will report code size, RAM usage, stack usage, FPGA LUT/FF/BRAM/DSP utilization, and power/energy overhead. For FPGA enclaves, we will measure the cost of softcore CPUs, memory, interconnects, peripheral wrappers, and hardware attestation modules.
+
+\textbf{Scalability evaluation.} We will evaluate increasingly complex bare-metal applications, RTOS workloads, multi-compartment trusted services, and multi-enclave FPGA configurations. We will compare evidence size and verification time against trace-based and hash-chain-based baselines.
+
+\textbf{Deployability evaluation.} We will demonstrate case studies in sensor processing, secure audio or camera pipelines, cryptographic services, and embedded control logic. The goal is to evaluate whether the mechanisms can be deployed under realistic resource and timing constraints.
+
+\begin{figure}[t]
+	\centering
+	\includegraphics[width=0.92\linewidth]{figs/fig07_seb_enclave_layout.png}
+	\caption{Dissertation figure used in the evaluation plan: SSA execution block and enclave layout. This motivates end-to-end attestation of loaded applications, memory layout, and execution boundaries.}
+	\label{fig:seb}
+\end{figure}
+
+% ==========================================================
+\section{Preliminary Results and Feasibility}
+% ==========================================================
+The feasibility of the project is supported by the dissertation prototypes. \byotee{} implemented an FPGA-based trusted execution infrastructure with hardware generation, firmware, SSA packaging, and attestation mechanisms. It demonstrated the construction of multiple isolated enclaves and evaluated hardware resource utilization, software TCB size, and execution performance. \enola{} implemented compiler instrumentation and runtime support for efficient control-flow attestation on Cortex-M systems. Figure~\ref{fig:pass} shows the compiler pass pipeline used in the preliminary system.
+
+\begin{figure}[t]
+	\centering
+	\includegraphics[width=0.90\linewidth]{figs/fig08_enola_compiler_pass_pipeline.png}
+	\caption{Dissertation figure used as a preliminary foundation: \enola{} compiler pass pipeline. The proposed work extends this pipeline for compartment-aware, interrupt-aware, data-flow-aware, and I/O-aware attestation.}
+	\label{fig:pass}
+\end{figure}
+
+The preliminary systems demonstrate that the proposed research is technically feasible. The new intellectual contributions will come from integrating configurable hardware trust anchors with runtime behavior evidence, decomposing trusted software into attestable compartments, and validating the microarchitectural assumptions of modern embedded trust anchors.
+
+% ==========================================================
+\section{Intellectual Merit}
+% ==========================================================
+This project will advance embedded systems security in four ways. First, it will develop new abstractions and tools for synthesizing application-specific trusted execution environments from policies. Second, it will develop scalable runtime attestation algorithms that bind control-flow, data-flow, and I/O-flow behavior to a trusted execution substrate. Third, it will introduce compartmentalization as a first-class property of embedded trust anchors and provide evidence that compartment boundaries were enforced. Fourth, it will establish a systematic methodology for studying and defending against transient-execution leakage on modern MCUs. Together, these contributions will move the field from static trusted execution toward verifiable trusted behavior.
+
+% ==========================================================
+\section{Broader Impacts}
+% ==========================================================
+The proposed research will improve the security of embedded and cyber-physical systems used in healthcare, transportation, manufacturing, public infrastructure, and smart environments. The project will produce open-source tools, benchmarks, and educational materials when possible. The research will support graduate and undergraduate training in embedded security, hardware/software co-design, trustworthy computing, and microarchitectural security. The project will also contribute hands-on modules for courses and workshops on MCU security, FPGA-based trusted execution, and runtime attestation.
+
+% ==========================================================
+\section{Project Timeline and Management Plan}
+% ==========================================================
+\begin{table}[h]
+	\centering
+	\caption{Planned project timeline.}
+	\label{tab:timeline}
+	\begin{tabular}{p{0.15\linewidth}p{0.77\linewidth}}
+		\toprule
+		\textbf{Year} & \textbf{Milestones} \\
+		\midrule
+		Year 1 & Policy language, enclave synthesis prototype, baseline configuration attestation, initial transient-measurement harness. \\
+		Year 2 & Runtime control-flow attestation for interrupts and RTOS tasks; first compartment isolation prototype. \\
+		Year 3 & Data-flow and I/O-flow evidence; compartment-aware attestation; transient leakage evaluation and defenses. \\
+		Year 4 & Integrated prototype, end-to-end evaluation, open-source release, educational modules, and transition documentation. \\
+		\bottomrule
+	\end{tabular}
+\end{table}
+
+\textbf{Risk mitigation.} If FPGA resources are insufficient for some workloads, we will evaluate smaller enclave profiles and hybrid MCU/FPGA enforcement. If certain MCUs do not exhibit measurable transient leakage, the methodology will still characterize the absence of primitives under tested configurations and identify which architectural features are sufficient to prevent leakage. If full data-flow attestation is too expensive, we will focus on security-critical data dependencies and I/O commitments.
+
+% ==========================================================
+\section{Results from Prior NSF Support}
+% ==========================================================
+% Include this section only if the PI/co-PI has prior NSF support within the NSF-required window.
+% Otherwise remove or replace with the correct text according to the current PAPPG.
+No results from prior NSF support are included in this draft template. This section should be replaced with the PI's required prior-support statement, if applicable.
+
+
+\bibliography{reference.bib}
 \end{document}
