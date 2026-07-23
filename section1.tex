@@ -1,0 +1,62 @@
+% ==========================================================
+\section{Overview and Objectives}
+% ==========================================================
+Embedded and cyber-physical systems increasingly control security- and safety-critical tasks in smart homes, industrial automation, medical devices, transportation, and public infrastructure. Their software stacks are often written in memory-unsafe languages, run with limited isolation, and interact directly with sensors and actuators. Trusted execution environments (TEEs) and remote attestation can provide a foundation for trustworthy execution, but existing embedded TEEs remain fixed, opaque, monolithic, and overprivileged. A single bug in trusted firmware, a periphseral driver, or a security-sensitive application can compromise the whole trusted domain. At the same time, modern microcontrollers are becoming more complex and increasingly include caches, predictors, hardware cryptographic extensions, and fast state transitions, raising new questions about control-flow attacks and microarchitectural leakage.
+
+This project will develop \sys, a new foundation for \emph{verifiable and compartmentalized trust anchors} for resource-constrained embedded systems. The central hypothesis is that embedded trust can be strengthened by combining four complementary ideas: reconfigurable hardware-based trusted execution, low-overhead runtime behavior attestation, fine-grained compartmentalization inside the trusted domain, and systematic analysis and mitigation of transient-execution leakage on modern MCUs. The project builds on two preliminary foundations. First, \byotee{} demonstrates that System-on-Chip FPGAs can be used to construct customizable enclaves with dedicated softcore CPUs, memory, and peripherals. Second, \enola{} demonstrates that hardware-assisted control-flow attestation can reduce attestation evidence size and measurement overhead for embedded firmware. This proposal integrates these foundations and extends them in new directions.
+
+
+
+\textbf{Goal.} The goal of this project is to enable a remote verifier to establish end-to-end trust in embedded systems: the correct hardware enclave was configured, the correct software was loaded, the expected control-flow, data-flow, and I/O behavior occurred, trusted components remained isolated under least privilege, and secrets did not leak through practical microarchitectural channels.
+
+\textbf{Research thrusts.} As shown in Figure~\ref{fig:vision}, the project has four thrusts:
+\begin{itemize}
+	\item \textbf{Thrust 1: Reconfigurable and Attestable Embedded TEEs.} We will synthesize minimal FPGA-based trust anchors from application policies and remotely attest their hardware/software configuration.
+	\item \textbf{Thrust 2: Runtime Behavior Attestation.} We will extend control-flow attestation toward realistic embedded execution, including interrupts, RTOS tasks, data-flow dependencies, and peripheral I/O.
+	\item \textbf{Thrust 3: Compartmentalized Trust Anchors.} We will decompose trusted firmware, drivers, cryptographic services, and applications into least-privilege compartments and attest compartment behavior.
+	\item \textbf{Thrust 4: Transient-Resilient Embedded Isolation.} We will systematically measure transient-execution primitives on modern MCUs and design defenses for embedded TEEs and attestation systems.
+\end{itemize}
+
+\textbf{Expected impact.} The project will produce new algorithms, mechanisms, and open-source prototypes for embedded trusted execution, runtime attestation, intra-TEE compartmentalization, and transient leakage analysis. The resulting tools will help secure embedded platforms used in medical, industrial, automotive, and IoT settings.
+
+
+\begin{figure}[t]
+	\centering
+	\includegraphics[width=0.98\linewidth]{figs/VEST_thrusts.pdf}
+	\caption{Proposed research trusts of VEST}
+	\label{fig:thrusts}
+\end{figure}
+
+\subsection{Proposed Research}
+As illustrated in Figure~\ref{fig:thrusts}, this proposal presents a comprehensive three-step research agenda, namely \sys: \textit{\underline{V}erifiable Trust \underline{E}stablishment for Embedded \underline{S}ys\underline{t}ems}, driven by the following overarching scientific goal:
+Designing and developing novel system architectures, algorithms, and compiler techniques that establish \textbf{application-specific trusted execution environments}, \textbf{continuously verify their runtime behavior}, and preserve trust through \textbf{localized containment and recovery}.
+
+To establish trust, \sys will construct application-specific trusted execution domains whose processing, memory, peripheral, communication, acceleration, and attestation resources are explicitly selected and remotely verifiable.
+To maintain trust, \sys will develop scalable runtime attestation for bare-metal and RTOS-based systems, with evidence that captures control flow, task transitions, interrupts, and other security-relevant events without growing with execution duration.
+To preserve trust after compromise, \sys will combine runtime evidence with verification-aware compartmentalization to localize violations, enforce authenticated boundaries, and selectively recover and re-attest affected domains while retaining trust in unaffected components.
+
+We plan to realize this vision by leveraging embedded-system-specific hardware capabilities—including configurable processing resources, memory protection, trusted execution support, hardware cryptographic engines, and control-flow protection—through the following three research thrusts:
+
+\textbf{Thrust 1: Application-Specific Trusted Execution Domains.}
+Conventional embedded TEEs multiplex trusted and untrusted workloads on the same processor and rely on fixed, platform-defined trust boundaries. Sharing processor time, caches, memory hierarchies, interrupt logic, and peripherals can introduce temporal interference, increase cross-domain exposure, and create side-channel risks. Moreover, applications cannot tailor the trusted hardware and software resources to their security requirements.
+
+This thrust will develop methods for constructing application-specific trusted execution domains from explicitly selected processing, memory, peripheral, communication, acceleration, and attestation resources. We will investigate new system architectures, resource-allocation and composition algorithms, hardware-assisted isolation, and attestation protocols that expose the security-relevant domain configuration to a remote verifier. The resulting domains will allow a verifier to confirm both the trusted software and the execution environment that protects it.
+
+\textbf{Thrust 2: Scalable Runtime Trust Attestation.}
+Control-flow attestation enables a remote verifier to determine whether embedded software followed an authorized execution path and thereby detect control-flow hijacking. However, existing approaches are difficult to deploy on resource-constrained and long-running systems because their evidence can grow with program complexity or execution duration. Measurement computation, trusted-world transitions, and protection of cryptographic state can also impose substantial overhead, while support for interrupts, asynchronous events, and multitasking execution remains limited.
+
+This thrust will develop scalable runtime trust attestation for both bare-metal and RTOS-based systems. Control-flow evidence will form the core of the attestation and will be augmented with task transitions, context switches, interrupt execution, and selected security-critical interactions. We will develop novel evidence-compression and verification algorithms, compiler-based instrumentation, protected measurement runtimes, and hardware-assisted cryptographic mechanisms. The proposed methods will bound evidence size by static program and task structure rather than execution duration while enabling efficient remote verification.
+
+\textbf{Thrust 3: Evidence-Guided Trust Containment and Recovery}
+Existing MCU compartmentalization mechanisms isolate code, data, and peripherals using the MPU, but frequent privileged transitions and MPU reconfiguration can impose substantial switching overhead. Moreover, naively composing spatial isolation with control-flow protection introduces new cross-domain risks: shared authentication keys may permit signed control-flow state to be reused across compartments, shared runtime code can enlarge the valid branch-target set, and interrupts or faults may execute outside the active sandbox or observe partially updated protection state. Existing approaches also provide limited support for identifying the affected domain and preserving trust in unaffected components after a violation.
+
+This thrust will develop evidence-guided compartmentalization that jointly enforces spatial isolation, authenticated control-flow boundaries, and safe asynchronous execution. We will design compiler analyses and partitioning algorithms, authenticated transition mechanisms using hardware cryptographic support, interrupt-safe runtime components, and evidence-guided recovery protocols. The proposed techniques will distinguish interface-only boundaries from those requiring data or peripheral isolation, identify the scope of compromise, selectively restore and re-attest affected domains, and preserve trust in unaffected components.
+
+\textbf{Intellectual Merit.}
+This project will advance the system architectures, hardware/software TCB design, and algorithms needed to establish, verify, and preserve trust in embedded systems.
+It will develop application-specific trusted execution domains with verifiable resource composition and isolation; scalable runtime attestation for bare-metal and RTOS-based systems; and evidence-guided compartmentalization for localized containment, recovery, and re-attestation. 
+Together, these contributions will create a continuous trust lifecycle spanning trusted-environment construction, runtime verification, and post-compromise restoration.
+
+\subsection{Relevance to SaTC}
+
+\subsection{PI Qualifications}

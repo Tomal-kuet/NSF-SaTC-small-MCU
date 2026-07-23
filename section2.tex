@@ -1,0 +1,19 @@
+\section{Background}
+\textbf{Architecture.}
+Embedded systems span a wide range of platforms, from resource-constrained microcontrollers to heterogeneous FPGA-based systems-on-chip.
+This project focuses on two representative classes: FPGA SoCs and Arm Cortex-M-based systems.
+An FPGA SoC integrates a fixed processor subsystem with programmable logic connected through on-chip interconnects.
+The processor subsystem typically executes system software and manages external memory, while the programmable logic can be configured with soft-core processors, local block RAM, peripherals, and communication modules.
+Cortex-M-based systems range from single-core microcontrollers to multicore and heterogeneous SoCs and commonly execute bare-metal firmware or lightweight RTOS workloads.
+Cortex-M processors provide \textit{Thread} mode for normal software execution and \textit{Handler} mode for exceptions and interrupts.
+They support privileged and unprivileged execution and include general-purpose registers, including stack-pointer registers, as well as system registers for managing processor state and configuration.
+Recent Cortex-M architectures also incorporate security features such as TrustZone, memory protection units (MPUs), and hardware cryptographic support.
+
+\textbf{Trusted Execution Environments.}
+Trusted execution environments (TEEs) use hardware-enforced isolation to protect security-sensitive code and data from the rest of the system.
+An embedded TEE typically separates execution into a trusted domain and a general-purpose or untrusted domain, with controlled interfaces governing communication across the security boundary.
+The trusted domain may host cryptographic services and secure storage, while the untrusted domain executes the remaining firmware or operating-system software.
+On Cortex-M processors, TrustZone enforces this separation through controlled transitions using designated entry points, security-aware control-transfer instructions (i.e., \texttt{SG}, \texttt{BLNS}), and protected exception handling.
+FPGA SoCs commonly integrate hard-core processors, such as Arm Cortex-A or RISC-V cores, which may provide their own TEE support.
+Their programmable logic can also be configured with soft-core processors, and interconnects to construct additional execution domains.
+Although TEEs provide a foundation for trusted execution, their security depends on the correctness of the trusted software and the integrity of the hardware resources and configurations that enforce the isolation boundary.
