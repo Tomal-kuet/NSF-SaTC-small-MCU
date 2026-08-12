@@ -38,9 +38,17 @@
 \captionsetup{font=small,labelfont=bf}
 
 \newcommand{\sys}{\textsc{Vest}\xspace}
-\newcommand{\byotee}{\textsc{BYOTEE}}
-\newcommand{\enola}{\textsc{ENOLA}}
+\newcommand{\byotee}{\textsc{ReTEE}\xspace}
+\newcommand{\enola}{\textsc{STAttest}\xspace}
+
 \newcommand{\etal}{\textit{et al.}}
+
+\newcommand{\arman}[1]{%
+	\begingroup
+	\definecolor{hlcolor}{RGB}{135, 216, 230}\sethlcolor{hlcolor}%
+	\textcolor{black}{\hl{\textit{\textbf{Arman:} #1}}}%
+	\endgroup
+}
 
 \title{\vspace{-1.2em}\textbf{SaTC: CORE: Small: VEST: Verifiable Trust Establishment on Embedded Systems}\vspace{-1.0em}}
 \author{}
@@ -53,6 +61,8 @@
 \input{section1}
 
 \input{section2}
+
+\input{section3}
 % ==========================================================
 \section{Motivation and Research Challenges}
 % ==========================================================
@@ -271,6 +281,6 @@ The proposed research will improve the security of embedded and cyber-physical s
 % Otherwise remove or replace with the correct text according to the current PAPPG.
 No results from prior NSF support are included in this draft template. This section should be replaced with the PI's required prior-support statement, if applicable.
 
-
-\bibliography{reference.bib}
+\bibliographystyle{plain}
+\bibliography{reference}
 \end{document}

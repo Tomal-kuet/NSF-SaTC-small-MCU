@@ -17,3 +17,12 @@ On Cortex-M processors, TrustZone enforces this separation through controlled tr
 FPGA SoCs commonly integrate hard-core processors, such as Arm Cortex-A or RISC-V cores, which may provide their own TEE support.
 Their programmable logic can also be configured with soft-core processors, and interconnects to construct additional execution domains.
 Although TEEs provide a foundation for trusted execution, their security depends on the correctness of the trusted software and the integrity of the hardware resources and configurations that enforce the isolation boundary.
+
+
+\textbf{Hardware Cryptographic Support.}
+Hardware cryptographic engines provide ISA-level interfaces that allow software to invoke cryptographic operations directly in hardware, substantially reducing the cost of security-critical computations.
+For example, the Arm Cortex-M85 implements the ARMv8.1-M Pointer Authentication (PA) extension, which uses the QARMA tweakable block cipher to generate keyed Pointer Authentication Codes (PACs) over pointer or data values~\cite{m85,avanzi2017qarma}.
+The PA extension exposes instructions such as \texttt{PAC} and \texttt{PACG}: \texttt{PAC} authenticates the link register using the stack pointer as a modifier and stores the resulting PAC in \texttt{r12}, whereas \texttt{PACG} allows software to specify general-purpose registers for the input, modifier, and output.
+The cryptographic key is implicitly selected from dedicated 128-bit PA key registers according to the processor's security state and privilege level; for example, \texttt{PAC\_KEY\_U\_NS} is used when \texttt{PACG} executes in unprivileged non-secure mode.
+These key registers are not memory mapped and can be configured only from authorized privileged software using \texttt{MSR} instructions.
+Hardware-assisted PA computation is substantially faster than software-based cryptographic measurements: on a 25,MHz Cortex-M85, a single \texttt{PACG} operation requires approximately 12 CPU cycles, compared with 5,768 cycles for an optimized software BLAKE2s computation, corresponding to at least a \textbf{480$\times$ speedup}.

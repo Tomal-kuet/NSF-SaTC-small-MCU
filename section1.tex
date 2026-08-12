@@ -1,25 +1,75 @@
 % ==========================================================
 \section{Overview and Objectives}
+\label{sec:overview}
 % ==========================================================
-Embedded and cyber-physical systems increasingly control security- and safety-critical tasks in smart homes, industrial automation, medical devices, transportation, and public infrastructure. Their software stacks are often written in memory-unsafe languages, run with limited isolation, and interact directly with sensors and actuators. Trusted execution environments (TEEs) and remote attestation can provide a foundation for trustworthy execution, but existing embedded TEEs remain fixed, opaque, monolithic, and overprivileged. A single bug in trusted firmware, a periphseral driver, or a security-sensitive application can compromise the whole trusted domain. At the same time, modern microcontrollers are becoming more complex and increasingly include caches, predictors, hardware cryptographic extensions, and fast state transitions, raising new questions about control-flow attacks and microarchitectural leakage.
-
-This project will develop \sys, a new foundation for \emph{verifiable and compartmentalized trust anchors} for resource-constrained embedded systems. The central hypothesis is that embedded trust can be strengthened by combining four complementary ideas: reconfigurable hardware-based trusted execution, low-overhead runtime behavior attestation, fine-grained compartmentalization inside the trusted domain, and systematic analysis and mitigation of transient-execution leakage on modern MCUs. The project builds on two preliminary foundations. First, \byotee{} demonstrates that System-on-Chip FPGAs can be used to construct customizable enclaves with dedicated softcore CPUs, memory, and peripherals. Second, \enola{} demonstrates that hardware-assisted control-flow attestation can reduce attestation evidence size and measurement overhead for embedded firmware. This proposal integrates these foundations and extends them in new directions.
 
 
+Embedded and cyber-physical systems have become fundamental components of modern computing infrastructure, supporting sensing, communication, control,
+and decision-making in applications ranging from industrial automation and transportation to medical devices, smart infrastructure, and the Internet of
+Things (IoT). Unlike traditional desktop and server systems, embedded devices often operate under tight computation, memory, energy, and timing constraints,
+interact directly with sensors and actuators, and remain deployed in the field for long periods of time. Consequently, compromise of an embedded device can
+affect not only software confidentiality and integrity, but also the physical processes that the device monitors or controls. Recognizing these risks, recent
+security guidance emphasizes that IoT and embedded devices require device-level cybersecurity capabilities that protect both the devices and the
+systems in which they operate~\cite{fagan2020iot,nist800213}.
 
-\textbf{Goal.} The goal of this project is to enable a remote verifier to establish end-to-end trust in embedded systems: the correct hardware enclave was configured, the correct software was loaded, the expected control-flow, data-flow, and I/O behavior occurred, trusted components remained isolated under least privilege, and secrets did not leak through practical microarchitectural channels.
+Despite their increasing security responsibilities, embedded systems remain particularly challenging to protect. Their firmware is commonly implemented in
+memory-unsafe languages such as C and C++, and many resource-constrained platforms provide considerably less isolation than general-purpose computing
+systems. Memory-corruption vulnerabilities can therefore lead to control-flow hijacking, unauthorized memory or peripheral access, and complete software
+compromise~\cite{abera2016c,dessouky2017fat,sun2020oat,yadav2023whole}. Modern embedded platforms increasingly provide hardware security mechanisms---including secure boot, memory
+protection units (MPUs), trusted execution environments (TEEs), hardware cryptographic engines, and architectural control-flow protection---that can
+reduce these risks. However, the presence of these mechanisms alone does not establish that an embedded system remains trustworthy throughout its execution.
 
-\textbf{Research thrusts.} As shown in Figure~\ref{fig:vision}, the project has four thrusts:
+\textbf{First, existing systems provide limited ability to determine precisely what constitutes the trusted execution environment.}
+TEEs isolate security-sensitive software from less-trusted software and have become an important foundation for embedded security.
+However, conventional TEE designs typically expose a fixed, platform-defined trusted computing base (TCB). Trusted and untrusted workloads may share processors, caches, memory hierarchies, interrupt infrastructure, and peripherals, while applications are given limited ability to select the hardware and software resources that should belong to their trusted environment. As a result, the trusted boundary may contain resources and privileged software that are unnecessary for a particular
+application, increasing both the TCB and the potential attack surface.
+Reconfigurable embedded hardware provides an opportunity to rethink this assumption: FPGA-based SoCs can construct isolated execution domains using explicitly selected processing, memory, peripheral, and communication resources~\cite{armanuzzaman2024building}. Yet a fundamental question remains: \emph{how can an embedded system construct an application-specific trusted execution environment whose hardware and software composition can itself be verified by a remote party?}
+
+\textbf{Second, establishing a trusted environment does not guarantee that its software continues to execute as intended.}
+Secure boot and conventional remote attestation can establish properties of software identity or initial system state, but a correctly loaded program can later be compromised through a runtime vulnerability. Control-flow attestation (CFA) addresses this gap by allowing a remote verifier to reason about the execution path taken by a program~\cite{abera2016c,dessouky2017fat,sun2020oat,yadav2023whole}. However, existing CFA approaches remain difficult to apply to resource-constrained and long-running embedded workloads. Evidence may grow with execution duration or program complexity, while software-based measurement, protected-domain transitions, and cryptographic operations can introduce significant runtime overhead.
+Moreover, realistic embedded systems are event driven: interrupts, exception handling, callbacks, RTOS scheduling, task transitions, and context switches can alter execution in ways that are not adequately represented by a simple single-program control-flow trace.
+Thus, a second fundamental question is: \emph{how can embedded systems provide scalable and protected runtime evidence that enables a verifier to reason about authorized execution across bare-metal and multitasking environments without evidence growing with execution duration?}
+
+\textbf{Third, existing trusted execution mechanisms provide limited support for preserving trust after a localized compromise.}
+A TEE is often treated as a single trusted domain even though it may contain multiple components, such as application logic, cryptographic services, parsers, communication code, and peripheral drivers. A vulnerability in one such component can therefore expose resources belonging to the entire trusted domain. Fine-grained compartmentalization can reduce this blast radius by restricting each component to the code, data, and peripherals that it requires.
+On resource-constrained MCUs, however, compartmentalization introduces additional challenges because MPU regions are limited and protection-state changes frequently require privileged transitions and reconfiguration.
+Furthermore, combining spatial isolation with architectural control-flow protection is not straightforward: shared authentication state, common runtime code, asynchronous interrupts, and partially updated protection state can create new cross-compartment attack opportunities.
+Existing mechanisms also provide little information to a remote verifier about which trusted component was affected by a violation and whether unaffected components can safely continue operation.
+
+These limitations reveal a broader scientific gap: \textbf{embedded trust is typically treated as a property established at a particular point in time, rather than as a property that must be established, verified, and preserved throughout system execution.}
+Knowing that the expected software was loaded does not establish whether the execution environment contained only the necessary trusted resources; knowing the initial environment does not establish whether the software subsequently followed authorized behavior; and detecting a runtime violation does not by itself determine which part of the trusted system must lose trust. Addressing these questions independently therefore leaves gaps between trusted-environment construction, runtime verification, and post-compromise response.
+
+This project proposes \textbf{VEST: Verifiable Trust Establishment for Embedded Systems}, with the objective of developing a continuous trust model for
+resource-constrained embedded systems. VEST will investigate how trusted execution environments can be constructed from explicitly selected hardware and
+software resources and exposed to a remote verifier; how hardware-assisted runtime evidence can efficiently represent control-flow, task, interrupt, and
+other security-relevant execution events; and how runtime evidence can be combined with fine-grained isolation to determine the scope of a violation,
+contain affected components, and selectively restore and re-attest them.
+Rather than treating trusted execution, runtime attestation, and compartmentalization as independent mechanisms, VEST will connect them through a common trust lifecycle in which the verifier can reason about \emph{what environment was established}, \emph{how that environment executed}, and \emph{what remains trustworthy following a localized compromise}.
+
+Accordingly, the project is driven by three overarching research objectives:
+
 \begin{itemize}
-	\item \textbf{Thrust 1: Reconfigurable and Attestable Embedded TEEs.} We will synthesize minimal FPGA-based trust anchors from application policies and remotely attest their hardware/software configuration.
-	\item \textbf{Thrust 2: Runtime Behavior Attestation.} We will extend control-flow attestation toward realistic embedded execution, including interrupts, RTOS tasks, data-flow dependencies, and peripheral I/O.
-	\item \textbf{Thrust 3: Compartmentalized Trust Anchors.} We will decompose trusted firmware, drivers, cryptographic services, and applications into least-privilege compartments and attest compartment behavior.
-	\item \textbf{Thrust 4: Transient-Resilient Embedded Isolation.} We will systematically measure transient-execution primitives on modern MCUs and design defenses for embedded TEEs and attestation systems.
+	\item \textbf{O1: Establish verifiable application-specific trust.}
+	Develop architectures and resource-composition mechanisms that construct
+	trusted execution environments according to application requirements and
+	enable remote verification of their security-relevant hardware and software
+	configuration.
+	
+	\item \textbf{O2: Maintain trust through scalable runtime evidence.}
+	Develop efficient runtime measurement and verification techniques for
+	bare-metal and RTOS-based embedded systems that capture security-relevant
+	execution while bounding measurement and communication overhead.
+	
+	\item \textbf{O3: Preserve trust after localized compromise.}
+	Develop evidence-guided compartmentalization, containment, recovery, and
+	re-attestation mechanisms that identify affected trusted domains while
+	allowing confidence in unaffected components to be retained.
 \end{itemize}
 
-\textbf{Expected impact.} The project will produce new algorithms, mechanisms, and open-source prototypes for embedded trusted execution, runtime attestation, intra-TEE compartmentalization, and transient leakage analysis. The resulting tools will help secure embedded platforms used in medical, industrial, automotive, and IoT settings.
-
-
+Achieving these objectives will move embedded-system security beyond
+one-time trust establishment toward a model in which trust can be continuously
+reasoned about from system construction, through runtime execution, to
+containment and recovery following compromise.
 \begin{figure}[t]
 	\centering
 	\includegraphics[width=0.98\linewidth]{figs/VEST_thrusts.pdf}
