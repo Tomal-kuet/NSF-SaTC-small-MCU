@@ -1,0 +1,20 @@
+% !TEX root = main.tex
+\subsection{Thrust 1: Application-Specific Trusted Execution Domains.}
+\label{sb:t1}
+
+\textbf{Problem Statement.}
+Trusted execution environments (TEEs) provide an important foundation for protecting security-sensitive computation, but their trust boundaries are typically determined by the underlying platform rather than by the requirements of individual applications~\cite{mccune2008flicker,hua2017vtz,koeberl2014trustlite,brasser2019sanctuary,sun2015trustice}.
+Different embedded applications, however, have fundamentally different security and resource requirements. One application may require only a processor, private memory, and access to a sensor, while another may additionally require communication interfaces, cryptographic services, or other peripherals~\cite{armanuzzaman2024building,hwang2021ambassy,teeod}.
+Nevertheless, conventional TEEs often expose these applications to a fixed hardware/software trusted computing base (TCB), causing them to trust resources and privileged components that are unnecessary for their execution~\cite{schneider2020pie,gross2019breaking,cerdeira2020sok}.
+This over-provisioning violates least privilege, enlarges the TCB, and increases the attack surface.
+
+A second limitation is that the composition of the trusted environment is often not explicit to a remote verifier~\cite{lebedev2019sanctorum,nunes2019vrased,armanuzzaman2024building}.
+Existing attestation mechanisms primarily establish the identity or integrity of trusted software, while the verifier must largely assume that the underlying processors, memory, peripherals, communication paths, and protection mechanisms constitute the intended execution environment~\cite{nunes2019vrased,armanuzzaman2024building}.
+Consequently, verifying that the expected software was loaded does not necessarily establish that it executes within the intended hardware/software trust boundary.
+The challenge is therefore not only to isolate trusted software, but also to make the resources that constitute its trusted execution environment \emph{application-specific, explicit, and verifiable}.
+
+This thrust asks the following fundamental question: \textbf{\textit{How can embedded systems construct application-specific trusted execution domains from explicitly selected hardware and software resources, while allowing a remote verifier to establish that the intended trust boundary has actually been instantiated?}} Addressing this question requires new abstractions and mechanisms for resource specification and composition, hardware-assisted isolation, and remote attestation of the resulting domain configuration. The resulting trusted execution abstraction should be applicable across embedded architectures that provide suitable isolation and configurable resource mechanisms, rather than being tied to a particular hardware platform.
+
+
+\textbf{Related Work.}
+Prior work has explored more flexible trusted execution through multiple isolated domains, dedicated hardware resources, and trusted I/O. vTZ~\cite{hua2017vtz}, Sanctuary~\cite{brasser2019sanctuary}, TrustICE~\cite{sun2015trustice}, uTango~\cite{oliveira2021utango}, and Keystone~\cite{Keystone2020} support multiple trusted execution environments using virtualization, memory protection, or trusted monitors. CURE~\cite{bahmani2021cure}, Composite Enclaves~\cite{schneider2020pie}, and HECTOR-V~\cite{nasahl2020hector} further provide exclusive or configurable access to resources such as processors, caches, and peripherals, while SGXIO~\cite{weiser2017sgxio} and SGX-FPGA~\cite{xia2021sgx} focus on protected I/O paths. Although these approaches improve isolation and resource control, they primarily address individual aspects of trusted execution rather than making an application's complete hardware/software trust boundary explicit, application-specific, and remotely verifiable. Thrust~1 addresses this gap by treating trusted-domain composition itself as a verifiable system property.
