@@ -1,1 +1,31 @@
 \subsection{Thrust 2: Scalable Runtime Trust Attestation.}
+\label{sb:t2}
+
+\textbf{Problem Statement.}
+Establishing a trusted execution domain does not guarantee that the software within that domain continues to execute as intended.
+Secure boot and conventional remote attestation can establish properties of the loaded software or initial system state, but they do not capture how the software behaves after execution begins.
+An attacker who exploits a runtime vulnerability may therefore redirect control flow, manipulate task execution, or abuse asynchronous system events without changing the initially attested binary.
+Control-flow attestation (CFA) addresses part of this problem by allowing a remote verifier to reason about the execution path taken by a program.
+However, existing CFA approaches are difficult to apply to realistic embedded systems because their evidence or measurement cost may grow with execution duration or program complexity, while protected-domain transitions and cryptographic operations can introduce significant runtime overhead.
+
+Embedded execution also differs fundamentally from the simple single-threaded program model assumed by many attestation schemes. Bare-metal firmware and RTOS
+systems are event-driven and may include interrupts, exception handlers, callbacks, task scheduling, context switches, and interactions among privileged and unprivileged components.
+These events alter the authorized execution state and can interleave with application control flow, making a conventional single-program trace insufficient to represent what actually occurred.
+Furthermore, the measurement state itself must remain protected while these asynchronous transitions take place.
+
+This thrust therefore asks the following fundamental question:
+\textbf{\textit{How can resource-constrained embedded systems generate compact and protected runtime evidence that enables a remote verifier to reason about authorized execution across long-running, interrupt-driven, and multitasking workloads without evidence growing with execution duration?}}
+Addressing this question requires new representations of embedded execution, hardware-assisted measurement mechanisms, and verifier algorithms that capture
+control-flow, task, interrupt, and other security-relevant events while bounding runtime, memory, and communication overhead.
+
+
+\textbf{Related Work.}
+\textbf{Related Work.}
+
+Prior work on remote attestation has progressed from static software-integrity verification to runtime control-flow attestation.
+Pioneer~\cite{seshadri2005pioneer}, VIPER~\cite{li2011viper}, PUFatt~\cite{kong2014pufatt}, and related hardware-assisted schemes~\cite{armknecht2013security,eldefrawy2012smart} establish code integrity or trustworthy execution state, but do not capture runtime control-flow hijacking.
+Control-flow attestation (CFA) addresses this limitation by reporting execution behavior.
+C-FLAT, OAT, Blast, DIAT~\cite{abera2019diat}, ARI~\cite{wangari}, ReCFA~\cite{zhang2021recfa}, SpecCFA~\cite{caulfield2024speccfa}, and ScaRR~\cite{toffalini2019scarr} explore different tradeoffs in trace granularity, evidence size, and verifier complexity, while CFA+~\cite{299850} combines local control-flow enforcement with lightweight attestation.
+Specialized-hardware approaches, including VRASED~\cite{nunes2019vrased}, ACFA~\cite{caulfield2023acfa}, LiteHAX~\cite{dessouky2018litehax}, Tiny-CFA~\cite{nunes2021tiny}, LO-FAT~\cite{dessouky2017fat}, and IDA~\cite{arkannezhadida}, provide stronger monitoring capabilities but often rely on dedicated or modified hardware.
+Despite these advances, existing approaches remain limited in supporting long-running, interrupt-driven, and multitasking embedded execution while simultaneously bounding evidence size, runtime overhead, and verifier complexity.
+Thrust~2 addresses this gap by developing scalable runtime evidence and verification mechanisms for realistic bare-metal and RTOS-based embedded systems.

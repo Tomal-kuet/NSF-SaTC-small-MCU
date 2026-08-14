@@ -25,7 +25,7 @@
 \usepackage[colorlinks=true,linkcolor=blue,citecolor=blue,urlcolor=blue]{hyperref}
 \usepackage{titlesec}
 \usepackage{caption}
-
+\usepackage{wrapfig}
 % Spacing: avoid overly tight formatting for NSF compliance.
 \linespread{1.0}
 \setlength{\parindent}{1.5em}
@@ -38,7 +38,7 @@
 \captionsetup{font=small,labelfont=bf}
 
 \newcommand{\sys}{\textsc{Vest}\xspace}
-\newcommand{\byotee}{\textsc{ReTEE}\xspace}
+\newcommand{\byotee}{\textsc{BYOTee}\xspace}
 \newcommand{\enola}{\textsc{STAttest}\xspace}
 
 \newcommand{\etal}{\textit{et al.}}
@@ -74,12 +74,6 @@ Existing embedded TEEs are useful because they isolate security-sensitive code f
 \subsection{Preliminary foundations from the dissertation}
 \textbf{FPGA-based customizable TEEs.} \byotee{} explores the use of SoC FPGAs as configurable trust anchors. The key insight is that an FPGA can instantiate application-specific enclaves with dedicated softcore CPUs, BRAM-based memory, peripherals, and interconnects. Because co-resident enclaves need not share processors or caches, the design can reduce several attack surfaces associated with monolithic TEEs. Figure~\ref{fig:byotee} shows the \byotee{} architecture and workflow, where a development-time toolchain generates protected FPGA images and security-sensitive applications (SSAs), and runtime enclaves execute isolated workloads.
 
-\begin{figure}[t]
-	\centering
-	\includegraphics[width=0.98\linewidth]{figs/fig02_byotee_architecture.png}
-	\caption{Preliminary foundation: \byotee{} architecture and workflow. The framework creates multiple FPGA-based enclaves with customized hardware resources, firmware, and peripheral bindings.}
-	\label{fig:byotee}
-\end{figure}
 
 \textbf{Hardware-assisted control-flow attestation.} \enola{} addresses the challenge of attesting embedded firmware execution without transmitting unbounded traces. It uses a bounded trace representation and hardware-assisted pointer-authentication measurements to create compact evidence of runtime behavior. Figure~\ref{fig:enola} shows the \enola{} workflow, where compiler instrumentation, secure measurement, and verifier-side reconstruction are combined to attest execution paths.
 

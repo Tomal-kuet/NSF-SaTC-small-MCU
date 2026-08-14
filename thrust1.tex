@@ -18,3 +18,48 @@ This thrust asks the following fundamental question: \textbf{\textit{How can emb
 
 \textbf{Related Work.}
 Prior work has explored more flexible trusted execution through multiple isolated domains, dedicated hardware resources, and trusted I/O. vTZ~\cite{hua2017vtz}, Sanctuary~\cite{brasser2019sanctuary}, TrustICE~\cite{sun2015trustice}, uTango~\cite{oliveira2021utango}, and Keystone~\cite{Keystone2020} support multiple trusted execution environments using virtualization, memory protection, or trusted monitors. CURE~\cite{bahmani2021cure}, Composite Enclaves~\cite{schneider2020pie}, and HECTOR-V~\cite{nasahl2020hector} further provide exclusive or configurable access to resources such as processors, caches, and peripherals, while SGXIO~\cite{weiser2017sgxio} and SGX-FPGA~\cite{xia2021sgx} focus on protected I/O paths. Although these approaches improve isolation and resource control, they primarily address individual aspects of trusted execution rather than making an application's complete hardware/software trust boundary explicit, application-specific, and remotely verifiable. Thrust~1 addresses this gap by treating trusted-domain composition itself as a verifiable system property.
+
+
+
+\begin{figure}[!t]
+	\centering
+	\includegraphics[width=0.98\linewidth]{figs/BYOTee-proposal.pdf}
+	\caption{Preliminary foundation of \textit{Thrust 1}: \byotee{} architecture and workflow. The framework creates multiple FPGA-based enclaves with customized hardware resources, firmware, and peripheral bindings.}
+	\label{fig:byotee}
+\end{figure}
+\textbf{Task 1.1: Application-Specific Trusted-Domain Composition}
+
+We will investigate how the security and resource requirements of an embedded application can be translated into an explicit and minimal trusted execution domain. The domain specification will identify the processing, memory, peripheral, communication, acceleration, trusted-software, and attestation resources required by the application, together with the isolation relationships among these resources. We will develop mechanisms for constructing such domains while excluding unnecessary components, unintended communication paths, and privileges that unnecessarily enlarge the trusted computing base.
+
+As preliminary work, we demonstrated this concept in \byotee~\cite{armanuzzaman2024building} on SoC FPGAs~\cite{FPGA2019}.
+As illustrated in Figure~\ref{fig:byotee}, the developer specifies an application's hardware requirements including the soft-core processor and its configuration, private BRAM, shared-memory regions, connected peripherals, and attestation support.
+\byotee allocates these resources, assigns enclave-local address spaces, connects the selected components, and generates the hardware configuration used to instantiate the enclave.
+Each enclave therefore contains only the hardware required by its application.
+FPGA routing isolates these resources and their communication paths from the host and other enclaves, while unnecessary hardware modules are excluded unless explicitly requested.
+The software TCB is similarly minimized by including only the runtime libraries, hardware-abstraction support, drivers, and loader needed by the protected application.
+
+\begin{wrapfigure}{r}{0.48\textwidth}
+	\centering
+	\vspace{-8pt}
+	\includegraphics[width=0.46\textwidth]{figs/BYOTee-attestation-proposal.pdf}
+	\caption{Verifiable trusted-domain establishment in \byotee. The FPGA Configuration Module (FCM) establishes the hardware configuration measurement, while HW-ATT measures and authenticates the protected firmware and application for remote verification.}
+	\label{fig:byotee_attestation}
+	\vspace{-10pt}
+\end{wrapfigure}
+
+We will extend this composition model to fixed-silicon embedded platforms, including ARM Cortex-A, ARM Cortex-M, and RISC-V systems~\cite{ArmCortexA, m85,rsicv}.
+Because these platforms cannot instantiate new hardware resources per application, the trusted domain must instead be realized by configuring existing protection and resource-assignment mechanisms. We will develop an architecture-independent domain specification and platform-specific mappings that translate it into mechanisms such as core assignment, TrustZone security configuration, MPU/PMP or MMU protection, interrupt routing, peripheral permissions, and DMA/IOMMU controls.
+A key challenge is determining whether a requested trust boundary can be faithfully realized on a given architecture and identifying configurations that preserve least privilege and isolation when hardware capabilities differ across platforms.
+
+
+\textbf{Task 1.2: Verifiable Trusted-Domain Establishment}
+
+We will investigate how a remote verifier can establish that the trusted domain defined in Task~1.1 has actually been instantiated as intended. Rather than attesting only the protected application, we will bind software measurements to evidence describing the security-relevant execution environment. This will allow the verifier to determine whether the realized domain corresponds to the expected hardware/software trust specification.
+
+As preliminary work, \byotee demonstrates this concept on SoC FPGAs using the FPGA Configuration Module (FCM) and the hardware attestation module (HW-ATT) shown in Figure~\ref{fig:byotee}.
+The FCM verifies and decrypts the protected bitstream before configuring the FPGA and generates a measurement representing the instantiated hardware configuration.
+After the enclave is established, as shown in Figure~\ref{fig:byotee_attestation}, HW-ATT can directly access protected enclave memory, securely hold attestation keys, verify and measure the firmware and protected application, and produce authenticated evidence for the remote verifier.
+The attestation process therefore binds the software identity to the measured hardware configuration, while a fresh verifier challenge provides freshness and prevents replay.
+
+
+We will generalize this verification model to fixed-silicon platforms, where the trusted-domain configuration is not represented by a single bitstream. Instead, the verifier must reason about a collection of security-critical architectural states that define the domain established in Task~1.1. We will identify the minimal configuration state that must be measured on each target architecture, securely bind those measurements to the protected software, and develop a common evidence representation for remote verification. The main challenge is ensuring that different platform-specific measurements carry equivalent trust semantics, allowing the verifier to determine whether the intended domain was established without requiring architecture-specific reasoning at every stage.
