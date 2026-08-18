@@ -29,3 +29,36 @@ C-FLAT, OAT, Blast, DIAT~\cite{abera2019diat}, ARI~\cite{wangari}, ReCFA~\cite{z
 Specialized-hardware approaches, including VRASED~\cite{nunes2019vrased}, ACFA~\cite{caulfield2023acfa}, LiteHAX~\cite{dessouky2018litehax}, Tiny-CFA~\cite{nunes2021tiny}, LO-FAT~\cite{dessouky2017fat}, and IDA~\cite{arkannezhadida}, provide stronger monitoring capabilities but often rely on dedicated or modified hardware.
 Despite these advances, existing approaches remain limited in supporting long-running, interrupt-driven, and multitasking embedded execution while simultaneously bounding evidence size, runtime overhead, and verifier complexity.
 Thrust~2 addresses this gap by developing scalable runtime evidence and verification mechanisms for realistic bare-metal and RTOS-based embedded systems.
+
+
+\textbf{Task 2.1: Compact and Verifier-Efficient Runtime Evidence}
+
+We will investigate runtime attestation mechanisms that keep both transmitted evidence and verifier cost practical as embedded applications become larger and execute for longer periods.
+Rather than recording complete execution traces whose size grows with the number of executed control-flow transfers, we will develop compact execution representations whose size is primarily determined by program structure.
+A central objective is to jointly optimize prover-side evidence generation and verifier-side reconstruction so that reducing communication overhead does not simply transfer excessive complexity to the remote verifier.
+
+\begin{wrapfigure}{r}{0.48\textwidth}
+	\centering
+	\vspace{-8pt}
+	\includegraphics[width=0.46\textwidth]{figs/Enola-overview.pdf}
+	\caption{Preliminary foundation of \textit{Thrust~2}: \enola architecture and workflow.}
+	\label{fig:enola}
+	\vspace{-10pt}
+\end{wrapfigure}
+
+As preliminary work, we developed \enola, which demonstrates that scalable control-flow evidence can be generated on commodity embedded processors without modifying the processor architecture.
+As illustrated in Figure~\ref{fig:enola}, the verifier first issues a fresh challenge, after which the trusted \enola attestation engine initializes the measurement keys and protection mechanisms.
+During program execution, compiler-inserted instrumentation records a basic-block occurrence trace while Arm Pointer Authentication instructions incrementally compute separate measurements for forward and backward control-flow transfers.
+The occurrence trace is maintained in TrustZone-protected memory, whereas the forward and backward measurements are retained in compiler-reserved registers so that they are not exposed to ordinary program memory.
+At the end of execution, these components are combined with the verifier challenge into an authenticated report and transmitted to the verifier, which reconstructs candidate execution paths and validates them against the received measurements.
+This design makes the transmitted authenticator linear in the number of program basic blocks rather than the length of the executed path and substantially reduces communication cost; for example, \enola requires an average of 397 bytes for Embench compared with 21,009 bytes for Blast. 
+
+
+Although \enola significantly reduces transmitted evidence, this compression exposes a new scalability challenge at the verifier.
+Different execution paths can sometimes produce the same basic-block occurrence information, requiring the verifier to explore multiple candidate paths before finding one consistent with the received measurements.
+This ambiguity can cause verification cost to grow rapidly for programs with increasingly complex control-flow structures.
+
+Building on this observation, we will develop ambiguity-aware runtime evidence that introduces additional information only for portions of the control-flow graph where the compact representation is insufficient to uniquely characterize execution.
+We will design static analyses to identify such ambiguous regions, determine what additional runtime information is necessary to distinguish their feasible paths, and generate this information selectively rather than increasing evidence for the entire program.
+We will correspondingly develop verifier algorithms that use these localized hints to prune infeasible paths early and bound reconstruction effort around the ambiguous regions.
+For continuously executing firmware, we will further investigate checkpointed and epoch-based attestation that periodically finalizes and authenticates bounded execution intervals, allowing runtime verification to continue indefinitely without requiring program termination or evidence growth proportional to total execution time.

@@ -39,7 +39,7 @@
 
 \newcommand{\sys}{\textsc{Vest}\xspace}
 \newcommand{\byotee}{\textsc{BYOTee}\xspace}
-\newcommand{\enola}{\textsc{STAttest}\xspace}
+\newcommand{\enola}{\textsc{ENOLA}\xspace}
 
 \newcommand{\etal}{\textit{et al.}}
 
@@ -77,12 +77,6 @@ Existing embedded TEEs are useful because they isolate security-sensitive code f
 
 \textbf{Hardware-assisted control-flow attestation.} \enola{} addresses the challenge of attesting embedded firmware execution without transmitting unbounded traces. It uses a bounded trace representation and hardware-assisted pointer-authentication measurements to create compact evidence of runtime behavior. Figure~\ref{fig:enola} shows the \enola{} workflow, where compiler instrumentation, secure measurement, and verifier-side reconstruction are combined to attest execution paths.
 
-\begin{figure}[t]
-	\centering
-	\includegraphics[width=0.92\linewidth]{figs/fig04_enola_workflow.png}
-	\caption{Preliminary foundation: \enola{} workflow for efficient control-flow attestation. The proposed project extends this foundation toward interrupts, RTOS execution, data-flow evidence, I/O-flow evidence, and compartment-aware attestation.}
-	\label{fig:enola}
-\end{figure}
 
 \subsection{Scientific questions}
 The proposed work is driven by four research questions. \textbf{RQ1:} How can embedded devices construct minimal and attestable trusted execution environments after deployment? \textbf{RQ2:} How can a verifier check not only which code was loaded, but also how the code executed and what I/O path it used? \textbf{RQ3:} How can a trusted domain be internally compartmentalized so that one vulnerable driver or library cannot compromise the full TEE? \textbf{RQ4:} How should embedded trust anchors be designed if modern MCUs support transient-execution leakage primitives?
