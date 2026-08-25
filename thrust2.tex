@@ -30,7 +30,6 @@ Thrust~2 addresses this gap by developing scalable runtime evidence and verifica
 
 
 \textbf{Task 2.1: Compact and Verifier-Efficient Runtime Evidence}
-
 We will investigate runtime attestation mechanisms that keep both transmitted evidence and verifier cost practical as embedded applications become larger and execute for longer periods.
 Rather than recording complete execution traces whose size grows with the number of executed control-flow transfers, we will develop compact execution representations whose size is primarily determined by program structure.
 A central objective is to jointly optimize prover-side evidence generation and verifier-side reconstruction so that reducing communication overhead does not simply transfer excessive complexity to the remote verifier.
@@ -44,7 +43,7 @@ A central objective is to jointly optimize prover-side evidence generation and v
 	\vspace{-10pt}
 \end{wrapfigure}
 
-As preliminary work, we developed \enola, which demonstrates that scalable control-flow evidence can be generated on commodity embedded processors without modifying the processor architecture.
+As preliminary work, we developed \enola~\cite{armanuzzaman2026enola}, which demonstrates that scalable control-flow evidence can be generated on commodity embedded processors without modifying the processor architecture.
 As illustrated in Figure~\ref{fig:enola}, the verifier first issues a fresh challenge, after which the trusted \enola attestation engine initializes the measurement keys and protection mechanisms.
 During program execution, compiler-inserted instrumentation records a basic-block occurrence trace while Arm Pointer Authentication instructions incrementally compute separate measurements for forward and backward control-flow transfers.
 The occurrence trace is maintained in TrustZone-protected memory, whereas the forward and backward measurements are retained in compiler-reserved registers so that they are not exposed to ordinary program memory.
@@ -60,3 +59,32 @@ Building on this observation, we will develop ambiguity-aware runtime evidence t
 We will design static analyses to identify such ambiguous regions, determine what additional runtime information is necessary to distinguish their feasible paths, and generate this information selectively rather than increasing evidence for the entire program.
 We will correspondingly develop verifier algorithms that use these localized hints to prune infeasible paths early and bound reconstruction effort around the ambiguous regions.
 For continuously executing firmware, we will further investigate checkpointed and epoch-based attestation that periodically finalizes and authenticates bounded execution intervals, allowing runtime verification to continue indefinitely without requiring program termination or evidence growth proportional to total execution time.
+
+
+\textbf{Task 2.2: Attestation of Interrupt-Driven and Multitasking Execution}
+We will investigate how runtime attestation can be extended from a single attested program to realistic embedded execution involving interrupts, RTOS tasks, scheduler activity, and context switches.
+In these systems, execution frequently moves among application tasks, interrupt service routines (ISRs), and privileged scheduler code.
+These transitions are legitimate, but they are not naturally represented by a single application control-flow graph and can interrupt, suspend, or resume different execution contexts.
+As a result, attesting only the main application does not provide the verifier with sufficient evidence to determine whether asynchronous and multitasking execution remained authorized.
+
+As preliminary work, \enola~\cite{armanuzzaman2026enola} incorporates an ISC-FLAT-inspired secure ISR dispatcher to protect control-flow attestation in the presence of untrusted interrupts~\cite{neto2023isc}.
+The dispatcher interposes on normal-state interrupts through the TrustZone-protected Nested Vectored Interrupt Controller (NVIC), securely saves the interrupted program context, including its stack pointer, forward and backward measurements, and relevant system registers, and protects the program stack before transferring control to the ISR.
+After the ISR completes, the dispatcher restores the saved context and resumes the attested program at the correct location.
+This mechanism prevents an untrusted or compromised ISR from corrupting the attested program or its measurement state while preserving the integrity of the program's attestation evidence.
+However, the ISR execution itself is not represented as part of the program's control-flow evidence; the mechanism primarily ensures that execution returns safely to the attested program.
+Thus, the verifier can establish that the protected program resumed consistently across an interrupt, but it cannot determine whether the ISR itself followed an authorized execution path.
+
+We will extend this foundation by treating interrupt handlers, RTOS tasks, and scheduler execution as first-class attested execution contexts.
+Each context will be associated with its own control-flow representation and protected measurement state, while interrupt entry, interrupt return, task preemption, scheduler dispatch, and task context switches will be represented as authenticated transitions among these contexts.
+As illustrated in Figure~\ref{fig:rtos-attestation}, when an interrupt or scheduling event changes the active execution context, the runtime will securely suspend and authenticate the current measurement state, initialize or restore the measurement state of the next context, and record the transition as part of the attestation evidence.
+For interrupt-driven execution, the evidence will bind the interrupted context, interrupt source, selected ISR, ISR execution measurement, and authenticated return.
+For multitasking execution, the evidence will additionally bind task identities, scheduler-mediated transitions, and the corresponding suspend and resume operations.
+
+A central challenge is to protect multiple measurement states without introducing excessive trusted-world transitions, memory overhead, or replay opportunities.
+We will investigate protected per-context measurement states that are securely stored and restored using hardware-supported cryptographic mechanisms, such as Pointer Authentication or lightweight MAC primitives, together with TrustZone-protected runtime support.
+Each suspended context will be cryptographically bound to its execution identity and transition history so that a compromised task or ISR cannot substitute, replay, or reuse the measurement state of another context.
+We will also investigate nested interrupts and preemptive scheduling, where multiple execution contexts may be suspended simultaneously, by maintaining an authenticated hierarchy of active and suspended measurement states.
+
+At the verifier, we will develop a hierarchical execution model that combines task-specific, ISR-specific, and scheduler control-flow graphs with an authenticated transition graph describing asynchronous and scheduling events.
+The verifier will check both \emph{intra-context execution}, determining whether each task or ISR followed an authorized control-flow path, and \emph{inter-context execution}, determining whether interrupts, scheduler decisions, context switches, and returns occurred through authorized transitions.
+This will enable the verifier to establish not only that individual applications remained protected, but also that the overall interrupt-driven and multitasking execution of the embedded system remained consistent with its expected runtime behavior.ined consistent with the expected embedded-system behavior.
