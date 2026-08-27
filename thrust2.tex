@@ -38,7 +38,7 @@ A central objective is to jointly optimize prover-side evidence generation and v
 	\centering
 	\vspace{-8pt}
 	\includegraphics[width=0.46\textwidth]{figs/Enola-overview.pdf}
-	\caption{Preliminary foundation of \textit{Thrust~2}: \enola architecture and workflow.}
+	\caption{Preliminary foundation of \textit{Thrust~2}: \enola architecture and workflow, leveraging cryptographic hardware.}
 	\label{fig:enola}
 	\vspace{-10pt}
 \end{wrapfigure}
@@ -59,7 +59,7 @@ Building on this observation, we will develop ambiguity-aware runtime evidence t
 We will design static analyses to identify such ambiguous regions, determine what additional runtime information is necessary to distinguish their feasible paths, and generate this information selectively rather than increasing evidence for the entire program.
 We will correspondingly develop verifier algorithms that use these localized hints to prune infeasible paths early and bound reconstruction effort around the ambiguous regions.
 For continuously executing firmware, we will further investigate checkpointed and epoch-based attestation that periodically finalizes and authenticates bounded execution intervals, allowing runtime verification to continue indefinitely without requiring program termination or evidence growth proportional to total execution time.
-
+\arman{This should focus on improvement in prover side is done and we demo in perliminary results.}
 
 \textbf{Task 2.2: Attestation of Interrupt-Driven and Multitasking Execution}
 We will investigate how runtime attestation can be extended from a single attested program to realistic embedded execution involving interrupts, RTOS tasks, scheduler activity, and context switches.
@@ -67,12 +67,10 @@ In these systems, execution frequently moves among application tasks, interrupt 
 These transitions are legitimate, but they are not naturally represented by a single application control-flow graph and can interrupt, suspend, or resume different execution contexts.
 As a result, attesting only the main application does not provide the verifier with sufficient evidence to determine whether asynchronous and multitasking execution remained authorized.
 
-As preliminary work, \enola~\cite{armanuzzaman2026enola} incorporates an ISC-FLAT-inspired secure ISR dispatcher to protect control-flow attestation in the presence of untrusted interrupts~\cite{neto2023isc}.
-The dispatcher interposes on normal-state interrupts through the TrustZone-protected Nested Vectored Interrupt Controller (NVIC), securely saves the interrupted program context, including its stack pointer, forward and backward measurements, and relevant system registers, and protects the program stack before transferring control to the ISR.
-After the ISR completes, the dispatcher restores the saved context and resumes the attested program at the correct location.
-This mechanism prevents an untrusted or compromised ISR from corrupting the attested program or its measurement state while preserving the integrity of the program's attestation evidence.
-However, the ISR execution itself is not represented as part of the program's control-flow evidence; the mechanism primarily ensures that execution returns safely to the attested program.
-Thus, the verifier can establish that the protected program resumed consistently across an interrupt, but it cannot determine whether the ISR itself followed an authorized execution path.
+Our preliminary work, \enola~\cite{armanuzzaman2026enola} uses an ISC-FLAT-inspired secure ISR dispatcher to preserve control-flow attestation in the presence of untrusted interrupts~\cite{neto2023isc}.
+The dispatcher intercepts interrupts through the TrustZone-protected NVIC, securely saves the interrupted program context and measurement state, protects the program stack during ISR execution, and restores the context on return.
+This protects the attested program from malicious ISRs, but the ISR execution itself is not included in the control-flow evidence.
+Therefore, the verifier can confirm safe resumption of the attested program, but cannot verify whether the ISR followed an authorized execution path.
 
 We will extend this foundation by treating interrupt handlers, RTOS tasks, and scheduler execution as first-class attested execution contexts.
 Each context will be associated with its own control-flow representation and protected measurement state, while interrupt entry, interrupt return, task preemption, scheduler dispatch, and task context switches will be represented as authenticated transitions among these contexts.

@@ -71,8 +71,23 @@
 
 \input{thrusts}
 % ==========================================================
-\section{Motivation and Research Challenges}
+\section{Evaluation Plan.}
 % ==========================================================
+\arman{Sectoins starting from here should be about 2-2.5 pages}
+
+% ==========================================================
+\section{Broader Impacts.}
+% ==========================================================
+
+% ==========================================================
+\section{Proposed Project Time line.}
+% ==========================================================
+
+% ==========================================================
+\section{Results from Prior NSF Support.}
+% ==========================================================
+
+\arman{As a new faculty do i need this section?}
 \subsection{Why embedded trust anchors need to change}
 Existing embedded TEEs are useful because they isolate security-sensitive code from a rich execution environment (REE), but they do not fully solve the trust problem for modern embedded systems. First, their hardware trusted computing base (TCB) is typically fixed at design time. A trusted domain may include unnecessary peripherals, broad memory privileges, and privileged drivers that violate least privilege. Second, many TEEs are proprietary or architecture-specific, limiting independent inspection and customization. Third, a TEE is often treated as a single trusted box. This ignores the fact that TEE software is commonly written in C/C++ and may contain bugs. Fourth, runtime attestation often proves only that the expected binary was loaded, not that the firmware followed the expected behavior. Finally, modern MCUs are no longer uniformly simple. Caches, branch prediction, fast secure/non-secure transitions, and hardware cryptographic features improve performance but may change the microarchitectural threat model.
 

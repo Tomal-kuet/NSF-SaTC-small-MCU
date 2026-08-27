@@ -43,7 +43,7 @@ We will investigate how the security and resource requirements of an embedded ap
 	\vspace{-10pt}
 \end{wrapfigure}
 
-As preliminary work, we demonstrated this concept in \byotee~\cite{armanuzzaman2024building} on SoC FPGAs~\cite{FPGA2019}.
+In our preliminary work, we demonstrated this concept in \byotee~\cite{armanuzzaman2024building} on SoC FPGAs~\cite{FPGA2019}.
 As illustrated in Figure~\ref{fig:byotee}, conventional TEEs typically place trusted applications within a common platform-defined boundary in which processor, memory, cache, peripherals, and privileged software may be shared across workloads.
 In contrast, \byotee constructs application-specific FPGA enclaves whose hardware and software composition is determined by the requirements of each trusted application.
 For each enclave, the developer specifies the required processor configuration, private memory, communication regions, peripherals, and attestation support.
@@ -77,7 +77,7 @@ We will investigate how a remote verifier can establish that the trusted domain 
 Rather than attesting only the protected application, we will bind evidence about the trusted software to measurements of the security-relevant execution environment.
 This will allow the verifier to determine whether both the hardware and software components of the realized domain match the expected trust specification.
 
-As preliminary work, \byotee demonstrates this concept on SoC FPGAs using the \underline{F}PGA \underline{C}onfiguration \underline{M}odule (FCM) and the \underline{H}ardware \underline{Att}estation module (HW-ATT), shown in Figure~\ref{fig:byotee}.
+In our preliminary work, \byotee~\cite{armanuzzaman2024building} demonstrates this concept on SoC FPGAs using the \underline{F}PGA \underline{C}onfiguration \underline{M}odule (FCM) and the \underline{H}ardware \underline{Att}estation module (HW-ATT), shown in Figure~\ref{fig:byotee}.
 During trust establishment, the FCM verifies and decrypts the protected FPGA bitstream, configures the enclave hardware, and generates a measurement $\mathbf{A}_H$ representing the instantiated hardware configuration.
 After the enclave is established, the protected application and associated firmware are loaded into enclave memory.
 As illustrated in Figure~\ref{fig:byotee_attestation}, HW-ATT accesses the protected enclave memory, securely maintains attestation keys, and measures the trusted software components to produce $\mathbf{A}_S$.
@@ -88,3 +88,5 @@ We will generalize this hardware/software trust-establishment model to fixed-sil
 Instead, the hardware component of the trust evidence must capture the collection of security-critical architectural states that realize the domain defined in Task~1.1, such as protection configuration, resource assignments, peripheral permissions, and execution-state controls.
 We will identify the minimal architecture-specific state required to construct an equivalent $\mathbf{A}_H$, securely bind it with the corresponding software evidence $\mathbf{A}_S$, and develop a common $\mathbf{A}_{TEE}$ representation for remote verification.
 The central challenge is to ensure that evidence generated from different architectural mechanisms conveys equivalent trust semantics, allowing the verifier to determine whether the intended hardware/software domain was established across heterogeneous embedded platforms.
+
+\textbf{Preliminary Results.} \arman{TODO:}
