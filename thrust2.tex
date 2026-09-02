@@ -66,10 +66,10 @@ For continuously executing firmware, we will further investigate checkpointed an
 Embedded systems rarely execute as a single linear control-flow path.
 In RTOS-based firmware, hardware interrupts, timer-driven preemption, exception handling, and scheduler-mediated task switching create dynamic execution patterns that do not map cleanly to a single static control-flow graph.
 As a result, attesting only the main application is insufficient: it cannot establish whether asynchronous and multitasking execution remained authorized, nor whether privileged transitions preserved the intended runtime trust boundary.
-This task therefore extends control-flow evidence generation from a single execution stream to multiple authenticated execution contexts that include both application tasks and interrupt handlers.
+This task addresses the limitations of single-stream control-flow evidence by developing authenticated evidence for multiple execution contexts, including application tasks and interrupt handlers.
 
-Our design extends the ENOLA attestation engine~\cite{armanuzzaman2026enola} to support interrupt-driven and multitasking embedded execution.
-The core instrumentation and measurement strategy follows the preliminary ENOLA design: compiler-inserted control-flow instrumentation records basic-block or edge-level execution events, while ARM Pointer Authentication instructions generate compact authenticated measurements that are protected from exposure in ordinary program memory.
+Based on the \enola attestation engine~\cite{armanuzzaman2026enola}, we will develop a runtime attestation design that addresses its limitations for interrupt-driven and multitasking embedded execution.
+The core instrumentation and measurement strategy follows the preliminary \enola design: compiler-inserted control-flow instrumentation records basic-block or edge-level execution events, while ARM Pointer Authentication instructions generate compact authenticated measurements that are protected from exposure in ordinary program memory.
 We will generalize this mechanism to multiple execution contexts by assigning each task and ISR its own control-flow representation and protected measurement state.
 The interrupt controller and vector table are configured so that hardware interrupts are routed to a TrustZone-protected attestation engine in secure state before control reaches the RTOS scheduler or the ISR itself.
 When a timer tick or external interrupt occurs, the secure engine first saves the currently active task’s execution state and measurement context, identifies the interrupt source and the next runnable context, and authenticates the transition from the interrupted context to the next execution context.
@@ -82,14 +82,14 @@ The next task’s saved context is restored only after this secure binding has b
 	\centering
 	\vspace{-8pt}
 	\includegraphics[width=0.46\textwidth]{figs/thrust2.2-rtos-attestation.pdf}
-	\caption{Interrupt-aware and multitask attestation framewrok}
+	\caption{Attestation framework for multitask and asynchronous-interrupt handling.}
 	\label{fig:thurst22}
 	\vspace{-10pt}
 \end{wrapfigure}
 
 
-This design naturally extends the ENOLA model to both interrupt-driven execution and multitasking execution.
-For interrupt handling, the evidence binds the interrupted task, interrupt source, selected ISR, ISR execution measurement, and authenticated return.
+As summarized in Figure~\ref{fig:thurst22}, the design addresses these \enola limitations for both multitask handling and asynchronous interrupt handling.
+For asynchronous interrupt handling, the evidence binds the interrupted task, interrupt source, selected ISR, ISR execution measurement, and authenticated return.
 For multitasking execution, the evidence binds task identities, scheduler-mediated transitions, and the corresponding suspend and resume operations.
 The final instruction of a task or ISR invokes a secure finalize step that seals the per-context measurement state before the next context is restored, preventing stale measurement reuse and ensuring that control-flow evidence is tied to the correct task identity and key context.
 
@@ -97,6 +97,7 @@ A central challenge is to protect multiple measurement states and key bindings w
 We will investigate protected per-context measurement states that are securely stored and restored using hardware-supported cryptographic mechanisms, such as Pointer Authentication or lightweight MAC primitives, together with TrustZone-protected runtime support.
 Each suspended context will be cryptographically bound to its execution identity, key slot, and transition history so that a compromised task or ISR cannot substitute, replay, or reuse the measurement state of another context.
 We will also investigate nested interrupts and preemptive scheduling, where multiple execution contexts may be suspended simultaneously, by maintaining an authenticated hierarchy of active and suspended measurement states.
+\arman{This can be shortened}
 
 At the verifier, we will develop a hierarchical execution model that combines task-specific, ISR-specific, and scheduler control-flow graphs with an authenticated transition graph describing asynchronous and scheduling events.
 The verifier will check both \emph{intra-context execution}, determining whether each task or ISR followed an authorized control-flow path, and \emph{inter-context execution}, determining whether interrupt delivery, scheduler decisions, task preemption, context switches, and returns occurred through authorized transitions.
