@@ -48,7 +48,8 @@ As illustrated in Figure~\ref{fig:enola}, the verifier first issues a fresh chal
 During program execution, compiler-inserted instrumentation records a basic-block occurrence trace while Arm Pointer Authentication instructions incrementally compute separate measurements for forward and backward control-flow transfers.
 The occurrence trace is maintained in TrustZone-protected memory, whereas the forward and backward measurements are retained in compiler-reserved registers so that they are not exposed to ordinary program memory.
 At the end of execution, these components are combined with the verifier challenge into an authenticated report and transmitted to the verifier, which reconstructs candidate execution paths and validates them against the received measurements.
-This design makes the transmitted authenticator linear in the number of program basic blocks rather than the length of the executed path and substantially reduces communication cost; for example, \enola requires an average of 397 bytes for Embench compared with 21,009 bytes for Blast. 
+This design makes the transmitted authenticator linear in the number of program basic blocks rather than the length of the executed path and substantially reduces communication cost.
+
 
 
 Although \enola significantly reduces transmitted evidence, this compression exposes a new scalability challenge at the verifier.
@@ -59,7 +60,7 @@ Building on this observation, we will develop ambiguity-aware runtime evidence t
 We will design static analyses to identify such ambiguous regions, determine what additional runtime information is necessary to distinguish their feasible paths, and generate this information selectively rather than increasing evidence for the entire program.
 We will correspondingly develop verifier algorithms that use these localized hints to prune infeasible paths early and bound reconstruction effort around the ambiguous regions.
 For continuously executing firmware, we will further investigate checkpointed and epoch-based attestation that periodically finalizes and authenticates bounded execution intervals, allowing runtime verification to continue indefinitely without requiring program termination or evidence growth proportional to total execution time.
-\arman{This should focus on improvement in prover side is done and we demo in perliminary results.}
+
 
 \textbf{Task 2.2: Attestation of Interrupt-Driven and Multitasking Execution}
 
@@ -67,6 +68,15 @@ Embedded systems rarely execute as a single linear control-flow path.
 In RTOS-based firmware, hardware interrupts, timer-driven preemption, exception handling, and scheduler-mediated task switching create dynamic execution patterns that do not map cleanly to a single static control-flow graph.
 As a result, attesting only the main application is insufficient: it cannot establish whether asynchronous and multitasking execution remained authorized, nor whether privileged transitions preserved the intended runtime trust boundary.
 This task addresses the limitations of single-stream control-flow evidence by developing authenticated evidence for multiple execution contexts, including application tasks and interrupt handlers.
+
+\begin{wrapfigure}{r}{0.48\textwidth}
+	\centering
+	\vspace{-8pt}
+	\includegraphics[width=0.46\textwidth]{figs/thrust2.2-rtos-attestation.pdf}
+	\caption{Attestation framework for multitask and asynchronous-interrupt handling.}
+	\label{fig:thurst22}
+	\vspace{-10pt}
+\end{wrapfigure}
 
 Based on the \enola attestation engine~\cite{armanuzzaman2026enola}, we will develop a runtime attestation design that addresses its limitations for interrupt-driven and multitasking embedded execution.
 The core instrumentation and measurement strategy follows the preliminary \enola design: compiler-inserted control-flow instrumentation records basic-block or edge-level execution events, while ARM Pointer Authentication instructions generate compact authenticated measurements that are protected from exposure in ordinary program memory.
@@ -78,14 +88,7 @@ This key change is performed in secure code, not in the untrusted RTOS scheduler
 The next task’s saved context is restored only after this secure binding has been validated, and the transition is recorded as authenticated evidence for the verifier.
 
 
-\begin{wrapfigure}{r}{0.48\textwidth}
-	\centering
-	\vspace{-8pt}
-	\includegraphics[width=0.46\textwidth]{figs/thrust2.2-rtos-attestation.pdf}
-	\caption{Attestation framework for multitask and asynchronous-interrupt handling.}
-	\label{fig:thurst22}
-	\vspace{-10pt}
-\end{wrapfigure}
+
 
 
 As summarized in Figure~\ref{fig:thurst22}, the design addresses these \enola limitations for both multitask handling and asynchronous interrupt handling.
@@ -102,3 +105,11 @@ We will also investigate nested interrupts and preemptive scheduling, where mult
 At the verifier, we will develop a hierarchical execution model that combines task-specific, ISR-specific, and scheduler control-flow graphs with an authenticated transition graph describing asynchronous and scheduling events.
 The verifier will check both \emph{intra-context execution}, determining whether each task or ISR followed an authorized control-flow path, and \emph{inter-context execution}, determining whether interrupt delivery, scheduler decisions, task preemption, context switches, and returns occurred through authorized transitions.
 This will enable the verifier to establish not only that individual applications remained protected, but also that the overall interrupt-driven and multitasking execution of the embedded system remained consistent with its expected runtime behavior.
+
+
+
+\textbf{Preliminary Results.}
+We implemented and evaluated \enola on the ARM Versatile Express V2M-MPS3 prototyping board configured as a Cortex-M85 microcontroller running at 25 MHz with the AN555 FPGA image and BSP v1.3.0.
+Our software evaluation used the LLVM 16.0.0 ARM embedded toolchain and included a syringe-pump application, the Embench benchmark suite, and the wolfSSL cryptographic library, with multiple compiler optimization levels.
+Across Embench, \enola reduced the average attestation data from 21,009 bytes with Blast to 397 bytes under O2 and 224 bytes under Oz, corresponding to a reduction of at least 52$\times$ and demonstrating that the transmitted evidence is determined primarily by program structure rather than execution length.
+These results establish the feasibility of the prover-side compact evidence targeted in Task 2.1, while motivating our proposed work on verifier ambiguity and continuously executing firmware.
