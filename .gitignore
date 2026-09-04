@@ -12,6 +12,9 @@
 *.cb
 *.cb2
 
+## Claude references documents
+reference-documents/*
+
 ## Intermediate documents:
 *.dvi
 *-converted-to.*
