@@ -109,7 +109,7 @@ This will enable the verifier to establish not only that individual applications
 
 
 \textbf{Preliminary Results.}
-We implemented and evaluated \enola on the ARM Versatile Express V2M-MPS3 prototyping board configured as a Cortex-M85 microcontroller running at 25 MHz with the AN555 FPGA image and BSP v1.3.0.
+We implemented and evaluated \enola on the ARM Versatile Express V2M-MPS3 prototyping board configured as a Cortex-M85 microcontroller running at 25 MHz with the AN555 FPGA image and BSP v1.3.0~\cite{ARMMPS3}.
 Our software evaluation used the LLVM 16.0.0 ARM embedded toolchain and included a syringe-pump application, the Embench benchmark suite, and the wolfSSL cryptographic library, with multiple compiler optimization levels.
 Across Embench, \enola reduced the average attestation data from 21,009 bytes with Blast to 397 bytes under O2 and 224 bytes under Oz, corresponding to a reduction of at least 52$\times$ and demonstrating that the transmitted evidence is determined primarily by program structure rather than execution length.
 These results establish the feasibility of the prover-side compact evidence targeted in Task 2.1, while motivating our proposed work on verifier ambiguity and continuously executing firmware.
