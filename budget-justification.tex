@@ -1,0 +1,123 @@
+% ==========================================================
+% Budget Justification -- standalone document.
+% Self-contained: preamble items below are copied from main.tex
+% so this file compiles on its own via `pdflatex budget-justification.tex`
+% (see Makefile: `make budget-justification`).
+%
+% Figures below are taken directly from the NSF Summary Proposal Budget
+% (file.pdf, Years 1-3 and Cumulative). Anywhere a number was not present
+% on the Summary Proposal Budget (e.g., graduate student FTE%, itemized
+% materials list) is flagged with an \arman{} note for the PI to confirm
+% or fill in before submission -- nothing below is invented.
+% ==========================================================
+\documentclass[11pt,onecolumn]{article}
+\usepackage[letterpaper,margin=1in]{geometry}
+\usepackage{times}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{enumitem}
+\usepackage{xcolor}
+\usepackage{soul}
+\usepackage[colorlinks=true,linkcolor=blue,citecolor=blue,urlcolor=blue]{hyperref}
+
+\linespread{1.0}
+\setlength{\parindent}{1.5em}
+\setlength{\parskip}{0pt}
+\setlist[itemize]{leftmargin=1.25em,itemsep=0.12em,topsep=0.15em}
+\pagestyle{empty}
+
+\newcommand{\arman}[1]{%
+	\begingroup
+	\definecolor{hlcolor}{RGB}{135, 216, 230}\sethlcolor{hlcolor}%
+	\textcolor{black}{\hl{\textit{\textbf{Arman:} #1}}}%
+	\endgroup
+}
+
+\begin{document}
+
+\section*{Budget Justification}
+\vspace{-0.3cm}
+University of Texas at El Paso
+
+\subsection*{A. Senior Personnel}
+\textbf{Principal Investigator -- MD Armanuzzaman (UTEP)} requests 1.5 calendar months of
+effort in each of the three project years (4.5 calendar months over the life of the award). The
+PI will provide overall research leadership for the project, direct the development of
+verifiable trust establishment techniques for embedded and microcontroller-class systems
+(control-flow attestation, hardware-enabled trust, and FPGA/SoC security), mentor and
+supervise the graduate research assistant, manage reporting requirements, and disseminate
+project results through peer-reviewed publications and conference presentations.
+\textbf{Total (3 years): \$61,157.}
+
+\subsection*{B. Other Personnel}
+\textbf{Graduate Research Assistant:} One graduate student in the T\textsubscript{3}SLab is
+budgeted for each of the three project years, supporting research on embedded systems
+security, hardware-enabled trust, and FPGA/SoC security. \arman{Confirm FTE\% and
+Ph.D./M.S. level -- the Summary Proposal Budget lists one graduate student per year with a
+Ph.D.-level tuition remission (Section G.6 below), so this is assumed to be the Ph.D.
+student.} Annual stipends are \$25,864 (Year 1), \$26,640 (Year 2), and \$27,440 (Year 3).
+\textbf{Total (3 years): \$79,944.}
+
+\subsection*{C. Fringe Benefits}
+Fringe benefits are calculated using UTEP's federally negotiated composite fringe benefit
+rates for faculty and graduate research assistants: \$8,354 (Year 1), \$8,461 (Year 2), and
+\$8,572 (Year 3). \textbf{Total Fringe Benefits (3 years): \$25,387.}
+
+\subsection*{D. Equipment}
+\$0. No single item of equipment exceeding \$10,000 is requested; smaller embedded-security
+evaluation hardware is budgeted under Materials and Supplies (Section G.1).
+
+\subsection*{E. Travel}
+A total of \$5,000 per year (domestic only) is budgeted to support travel for the PI and the
+graduate research assistant to attend top-tier security conferences, including but not limited
+to IEEE S\&P, ACM CCS, USENIX Security, NDSS, and ACSAC, consistent with UTEP and NSF
+travel policies. \textbf{Total (3 years): \$15,000.}
+
+\subsection*{F. Participant Support Costs}
+\$0.
+
+\subsection*{G. Other Direct Costs}
+\begin{enumerate}[label=\arabic*.,leftmargin=1.6em]
+	\item \textbf{Materials and Supplies:} \$10,000 (Year 1), \$0 (Year 2), \$0 (Year 3).
+	Year 1 funds support one-time acquisition of embedded-security evaluation hardware and
+	lab consumables (e.g., microcontroller/FPGA evaluation boards, side-channel evaluation
+	tooling, and development boards). \arman{Confirm/expand itemized list if research.gov
+	requires per-item breakdown.} \textbf{Total: \$10,000.}
+	\item \textbf{Publication Costs:} \$0 (Year 1), \$2,500 (Year 2), \$2,500 (Year 3), to
+	cover open-access publication and conference proceedings fees as results become
+	available. \textbf{Total: \$5,000.}
+	\item \textbf{Consultant Services:} None.
+	\item \textbf{Computer Services:} None.
+	\item \textbf{Subawards:} None.
+	\item \textbf{Other (Tuition):} Graduate student tuition remission of \$6,902 per year is
+	included for three years, totaling \textbf{\$20,706}. Tuition is excluded from the
+	indirect cost base in accordance with NSF and UTEP policy.
+\end{enumerate}
+\textbf{Total Other Direct Costs (3 years): \$35,706.}
+
+\subsection*{H. Total Direct Costs}
+Year 1: \$75,906, Year 2: \$69,883, Year 3: \$71,405. \textbf{Total (3 years): \$217,194.}
+
+\subsection*{I. Indirect Costs}
+Indirect costs are calculated at UTEP's federally negotiated rate of 53.5\% of Modified Total
+Direct Costs (MTDC). MTDC excludes tuition and other unallowable categories: \$69,004
+(Year 1), \$62,981 (Year 2), and \$64,503 (Year 3). \textbf{Total Indirect Costs (3 years):
+\$105,121.}
+
+\subsection*{J. Total Amount Requested}
+\begin{center}
+\begin{tabular}{lrrrr}
+	\toprule
+	Category & Year 1 & Year 2 & Year 3 & Cumulative \\
+	\midrule
+	Direct Costs   & \$75,906  & \$69,883  & \$71,405  & \$217,194 \\
+	Indirect Costs & \$36,917  & \$33,695  & \$34,509  & \$105,121 \\
+	\midrule
+	\textbf{Total} & \textbf{\$112,823} & \textbf{\$103,578} & \textbf{\$105,914} & \textbf{\$322,315} \\
+	\bottomrule
+\end{tabular}
+\end{center}
+
+No cost sharing is proposed.
+
+\end{document}
