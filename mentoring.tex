@@ -1,3 +1,17 @@
+% Standalone build wrapper for mentoring.tex.
+% Produces mentoring.pdf directly via pdflatex (never via Preview/Quartz export,
+% which corrupts PDF object dictionaries and gets rejected by research.gov).
+% Build with: make mentoring   (see Makefile)
+\documentclass[11pt,onecolumn]{article}
+\usepackage[letterpaper,margin=1in]{geometry}
+\usepackage{times}
+\usepackage[colorlinks=true,linkcolor=blue,citecolor=blue,urlcolor=blue]{hyperref}
+\linespread{1.0}
+\setlength{\parindent}{1.5em}
+\setlength{\parskip}{0pt}
+\pagestyle{empty}
+\begin{document}
+
 \section*{Mentoring Plan}
 \label{sec:mentoring}
 
@@ -16,3 +30,5 @@
 \textbf{Peer Mentoring and Professional Integrity.} Students will mentor junior researchers and contribute to a collaborative research culture. Senior students will guide younger students in literature review, implementation tasks, debugging, and technical presentation, while all mentees will be trained in responsible conduct of research, authorship, data handling, reproducibility, and ethical dissemination of results. Progress will be assessed through IDPs and regular feedback sessions.
 
 \textbf{Expected Outcomes.} This mentoring plan will prepare students to conduct high-quality systems security research, produce scholarly work, present at conferences, and contribute to a broader research community. By the end of the project, students are expected to have co-authored publications, developed technical artifacts, and built the professional foundation needed for successful careers in research and engineering.
+
+\end{document}

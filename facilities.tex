@@ -1,5 +1,17 @@
-\newpage
-\pagenumbering{gobble}
+% Standalone build wrapper for facilities.tex.
+% Produces facilities.pdf directly via pdflatex (never via Preview/Quartz export,
+% which corrupts PDF object dictionaries and gets rejected by research.gov).
+% Build with: make facilities   (see Makefile)
+\documentclass[11pt,onecolumn]{article}
+\usepackage[letterpaper,margin=1in]{geometry}
+\usepackage{times}
+\usepackage[colorlinks=true,linkcolor=blue,citecolor=blue,urlcolor=blue]{hyperref}
+\linespread{1.0}
+\setlength{\parindent}{1.5em}
+\setlength{\parskip}{0pt}
+\pagestyle{empty}
+\begin{document}
+\let\newpage\relax
 
 \section*{Facilities, Equipment, and Other Resources}
 
@@ -22,3 +34,6 @@ The project benefits from unfunded industrial collaborations that provide comple
 \textbf{Peter Linder, Cofounder and Chief Product Architect, \textit{Octavo Systems}.} Contributes expertise in embedded systems design and FPGA-based SoC platforms, with particular emphasis on hardware/software co-design and secure implementation strategies for embedded systems.
 
 \textbf{Malav Vyas, Security Researcher, \textit{Palo Alto Networks}.} Contributes expertise in SCADA and industrial control system security and applied security analysis for real-world IoT systems. These collaborations provide additional technical guidance on secure hardware/software co-design, systems security, and deployment-oriented security research.
+
+
+\end{document}
