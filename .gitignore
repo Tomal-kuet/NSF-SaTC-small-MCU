@@ -15,15 +15,23 @@
 ## Claude references documents
 reference-documents/*
 
+## internal docs:
+MD Armanuzzamn/*
+
 ## Intermediate documents:
 *.dvi
 *-converted-to.*
+*.md
 # these rules might exclude image files for figures etc.
 # *.ps
 # *.eps
 
 ## Generated if empty string is given at "Please type another file name for output:"
 main.pdf
+facilities.pdf
+facilities-standalone.pdf
+mentoring-standalone.pdf
+mentoring.pdf
 diff.pdf
 appendix.pdf
 ~*
