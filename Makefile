@@ -34,14 +34,14 @@ mentoring: mentoring.pdf
 
 budget-justification: budget-justification.pdf
 
-main.pdf: main.tex section1.tex section2.tex section3.tex thrusts.tex thrust1.tex thrust2.tex thrust3.tex mentoring.tex facilities.tex reference.bib
+main.pdf: main.tex section1.tex section2.tex section3.tex thrusts.tex thrust1.tex thrust2.tex thrust3.tex reference.bib
 	$(LATEXMK) main.tex
 
-facilities.pdf: facilities-standalone.tex facilities.tex
-	$(PDFLATEX) -jobname=facilities facilities-standalone.tex
+facilities.pdf: facilities.tex
+	$(PDFLATEX) -jobname=facilities facilities.tex
 
-mentoring.pdf: mentoring-standalone.tex mentoring.tex
-	$(PDFLATEX) -jobname=mentoring mentoring-standalone.tex
+mentoring.pdf: mentoring.tex
+	$(PDFLATEX) -jobname=mentoring mentoring.tex
 
 budget-justification.pdf: budget-justification.tex
 	$(PDFLATEX) budget-justification.tex
