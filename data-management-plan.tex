@@ -1,0 +1,300 @@
+\documentclass[11pt,onecolumn]{article}
+%\usepackage[hmargin=1in,vmargin=1in]{geometry}
+\usepackage{times}
+%\usepackage[utf8]{inputenc}
+\usepackage[dvipsnames, table]{xcolor}
+\usepackage{threeparttable}
+\usepackage{color}
+\usepackage{url}
+\usepackage{wrapfig}
+\usepackage{subfig}
+\usepackage{graphicx}
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta}
+\usepackage{multirow}
+\usepackage{pgfgantt}
+\usepackage{comment}
+\usepackage{amssymb}
+\graphicspath{ {./figures/} }
+\usepackage{enumitem}
+\usepackage[para]{footmisc}
+\usepackage[most]{tcolorbox}
+\usepackage[compact]{titlesec}
+\titlespacing{\section}{1pt}{3pt}{3pt}
+\titlespacing{\subsection}{1pt}{4pt}{3pt}
+\titlespacing{\subsubsection}{1pt}{3pt}{3pt}
+\setcounter{secnumdepth}{4}
+\renewcommand{\baselinestretch}{0.9}
+
+\usepackage[sort&compress]{natbib}
+\setitemize{noitemsep,topsep=0pt,parsep=0pt,partopsep=0pt}
+
+\usepackage{array}
+%\usepackage[bottom]{footmisc}
+\usepackage{setspace}
+\newcolumntype{P}[1]{>{\centering\arraybackslash}p{#1}}
+% See this file for a set of pre-defined journal abbreviations
+
+%\newcommand\notsotiny{\@setfontsize\notsotiny{6}{7}}
+\newcommand{\ignore}[1]{}
+\newcommand{\sysnamecfi}{{\scshape Sherloc}\xspace}
+
+\newcommand{\degrees}{$\!\!$\char23$\!$}
+\renewcommand{\refname}{\centerline{References cited}}
+
+% This handles hanging indents for publications
+\def\rrr#1\\{\par
+\medskip\hbox{\vbox{\parindent=2em\hsize=6.12in
+\hangindent=4em\hangafter=1#1}}}
+
+\hyphenation{net-works}
+\hyphenation{non-preemptive}
+\hyphenation{sche-duling}
+
+% Float separation. The LaTeX defaults (textfloatsep 20pt, floatsep 12pt,
+% intextsep 12pt) read as roughly a blank line and a half at 11pt, which looks
+% loose beside tables and costs real space in a page-limited document. These are
+% tightened but not collapsed -- a float still reads as separate from the text.
+\setlength{\textfloatsep}{11pt plus 2pt minus 3pt}
+\setlength{\floatsep}{9pt plus 2pt minus 2pt}
+\setlength{\intextsep}{9pt plus 2pt minus 2pt}
+\setlength{\abovecaptionskip}{5pt}
+\setlength{\belowcaptionskip}{2pt}
+
+\newcommand{\head}[1]{\vspace{0.4em}\noindent{\bf #1}}
+\newcommand{\npara}[1]{\noindent{\bf #1}}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% CVE CORPUS FIGURES -- SINGLE SOURCE OF TRUTH.
+% Every number below comes from CVEs-filled-v2.xlsx. Change them HERE ONLY;
+% every use site follows. Regenerate with scripts/fetch_cves.py.
+%
+% SCOPE: open-source RTOSes that target microcontroller-class hardware, ship
+% their OWN network stack rather than linking an external one, and whose
+% advisories identify the defective component.
+%   IN  : Zephyr (195), Contiki-NG (53), Eclipse ThreadX (44), RIOT-OS (41),
+%         FreeRTOS (38), RT-Thread (22), Mbed OS (17), NuttX (12)
+%         -- eight RTOSes, 422 unique CVEs, 2017-2026.  CVE-2023-24823 is
+%         duplicated in DB-all rows 128-129 and counted once.  Eclipse ThreadX folds in the
+%         rows still labeled Azure RTOS in DB-all (28 + 16).
+%   OUT : general-purpose TLS libraries (Mbed TLS, wolfSSL) -- far more of
+%         their deployments are servers than microcontrollers.
+%   OUT : ThreadX middleware (USBX / FileX / GUIX) -- separate products that
+%         are neither the kernel nor the network stack. NetX Duo IS included.
+%   OUT : RT-Thread (22) and NuttX (12) -- their records are dominated by
+%         third-party submissions whose descriptions do not locate the defect
+%         to a component, which the per-CVE analysis in Aim 1 requires.
+%   OUT : CMSIS RTOS2 (1 CVE), and 8 rows whose defect is outside the network
+%         subsystem entirely (Antelope DB, GNSS).
+%
+% NOTE: Mbed OS reached END OF LIFE in July 2026 (Arm archived the platform).
+% It is retained as a maintenance-ended case and that status is stated in text.
+%
+% CVSS is NVD v3.x throughout -- one scorer, one version. Vendor-supplied
+% scores were replaced (76 of 345 differed) and preserved in a backup column.
+% 2026 is PARTIAL: collected August 2026.
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\newcommand{\cveYears}{2017--2026}    % 2026 partial
+\newcommand{\cveTotal}{406}           % RTOS CVEs in the corpus
+\newcommand{\nRtos}{eight}              % number of RTOSes studied
+\newcommand{\nNetCVE}{292}            % network-component CVEs
+\newcommand{\pctNet}{71.9\%}            % HEADLINE: 296/422 = 70.1%
+\newcommand{\pctCritHigh}{66.7\%}       % critical or high, all CVEs: 279/422 = 66.1%
+\newcommand{\pctNetCritHigh}{67.8\%}  % critical or high among NETWORK CVEs: 202/296
+% Where the damage lands, among the \nNetCVE{} network-component CVEs:
+\newcommand{\nProtoImpl}{264}         % confined to protocol logic
+\newcommand{\nSysState}{23}           % ALSO corrupt RTOS system state
+\newcommand{\nSharedUtil}{5}          % defect in a shared, non-network module
+\newcommand{\pctProtoImpl}{90.4\%}   % 268/296
+\newcommand{\pctSysState}{7.9\%}     % 23/296
+\newcommand{\pctSharedUtil}{1.7\%}   % 5/296
+% Deprecated -- the old Cerdeira validation/functional/extrinsic split no
+% longer applies to this corpus. Kept so stale references still compile.
+\newcommand{\cveSwTotal}{\cveTotal}
+\newcommand{\pctComm}{\pctNet}
+
+\usepackage{hyperref}
+\hypersetup{
+  colorlinks=true,
+  breaklinks=true,
+  citecolor=black,
+  linkcolor=black,
+  urlcolor=black,
+  citebordercolor={1 1 1},
+  linkbordercolor={1 1 1},
+}
+
+%%%%%%%%%% verbatim related
+\usepackage{fancyvrb}
+\fvset{framesep=2mm,fontsize=\scriptsize,framerule=.1mm,numbersep=1mm,commandchars=\\\{\}}
+\usepackage{listings}
+
+\renewcommand{\url}[1]{#1}
+
+\newcommand*\numcircledmod[1]{\raisebox{.5pt}{\textcircled{\raisebox{-.9pt} {#1}}}}
+
+
+\definecolor{internationalorange}{rgb}{1.0, 0.31, 0.0}
+
+\newif\ifrev
+%%%%%%%%%%%%%%%%%%
+% COMMENT OUT NEXT LINE TO HIDE COMMENTS
+\revtrue
+%%%%%%%%%%%%%%%%%%
+\ifrev
+  % \newcommand{\gedare}[1]{\textcolor{internationalorange}{\textsc{Gedare:} #1}}
+  \newcommand{\tomal}[1]{{\color{ForestGreen} [Tomal: #1]}}
+  \newcommand{\xitan}[1]{{\color{Dandelion} [Xi: #1]}}
+  % \newcommand{\habeeb}[1]{{\color{RoyalPurple} [Habeeb: #1]}}
+  \newcommand{\red}[1]{\textcolor{red}{#1}}
+  \newcommand{\blue}[1]{\textcolor{blue}{#1}}
+  \newcommand{\todo}[1]{\textcolor{red}{\textbf{Anyone todo}: #1}}
+  % \newcommand{\gtodo}[1]{\textcolor{internationalorange}{\textbf{Gedare todo:} #1}}
+  \newcommand{\ttodo}[1]{\textcolor{ForestGreen}{\textbf{Tomal todo:} #1}}
+  \newcommand{\xtodo}[1]{\textcolor{Dandelion}{\textbf{Xi todo:} #1}}
+  % \newcommand{\htodo}[1]{\textcolor{RoyalPurple}{\textbf{Habeeb todo:} #1}}
+\else
+  % \newcommand{\gedare}[1]{}
+  \newcommand{\tomal}[1]{}
+  \newcommand{\xitan}[1]{}
+  % \newcommand{\habeeb}[1]{}
+  \newcommand{\red}[1]{}
+  \newcommand{\blue}[1]{}
+  \newcommand{\todo}[1]{}
+  % \newcommand{\gtodo}[1]{}
+  \newcommand{\ttodo}[1]{}
+  \newcommand{\xtodo}[1]{}
+  % \newcommand{\htodo}[1]{}
+\fi
+
+\newcommand{\ls}[1]
+   {\dimen0=\fontdimen6\the\font
+    \lineskip=#1\dimen0
+    \advance\lineskip.5\fontdimen5\the\font
+    \advance\lineskip-\dimen0
+    \lineskiplimit=.9\lineskip
+    \baselineskip=\lineskip
+    \advance\baselineskip\dimen0
+    \normallineskip\lineskip
+    \normallineskiplimit\lineskiplimit
+    \normalbaselineskip\baselineskip
+    \ignorespaces
+   }
+
+
+\newtcolorbox{Box1}[2][]{
+                lower separated=false,
+                colback=gray!10,
+colframe=black,fonttitle=\bfseries,
+colbacktitle=black,
+coltitle=white,
+enhanced,
+attach boxed title to top left={yshift=-0.1in,xshift=0.15in},
+                 boxed title style={boxrule=0pt,colframe=white,},
+title=#2,#1}
+
+\begin{document}
+\pagestyle{empty}
+
+
+\section*{\large Data Management and Sharing Plan}
+
+\vspace{4pt}
+
+\noindent Our data management and sharing plan ensures that project data, software, and educational
+materials are collected responsibly, documented clearly, and shared openly, while managing the
+one real safety concern this project's outputs raise: working exploit code is dual-use until the
+vulnerability it targets is patched.
+Everything else --- the corpus, the benchmark once disclosed, the enforcement and attestation
+prototypes, and the course material --- is released without restriction, since the goal stated
+throughout the proposal is a benchmark and toolchain any RTOS maintainer can run independently
+of us.
+
+\head{Data and Software.}
+The project produces three kinds of output.
+\emph{Research data}: the exploitation-requirement dataset, a per-CVE record (category~(i)--(iv)
+label, risky component and input, recurring code shape, critical variables) extracted from the
+\nNetCVE{} network-component CVEs disclosed against \nRtos{} RTOSes~\cite{tan24sok}; the
+cross-stack pattern-confirmation records from Task~1.1; the benchmark of reproduced exploits
+(build configuration, triggering input sequence, oracle predicate, expected verdict) on both
+physical boards and scoped rehosted targets from Task~1.3; and the security and cost measurements
+from the RT~2/RT~3 evaluation (equivalent-target-set counts, throughput, latency, flash/RAM,
+worst-case execution time, attestation report size, verifier latency).
+Every record in this dataset is derived from an already-public CVE advisory, so none of it is
+sensitive on its own.
+The one exception is a confirmed cross-stack \emph{variant} of a known pattern before its
+coordinated disclosure completes: that exploit is held privately, shared only with the affected
+maintainer, and joins the public benchmark once a patch ships, exactly as the project description's
+disclosure policy commits.
+\emph{Software}: the LLVM instrumentation passes for protocol-state-aware control-flow and
+critical-data-flow integrity (RT~2); the attestation compiler, analyzer and verifier extending the
+open-source ENOLA toolchain~\cite{armanuzzaman2026enola} (RT~3); the cross-stack query tooling and
+scoped-rehosting harness (RT~1); and the benchmark harness itself.
+\emph{Educational materials}: the capture-the-flag challenges and hands-on lab modules built on the
+benchmark, and course material for the new non-Linux embedded-systems-security course at UCCS and
+UTEP.
+
+\head{Standards and Formats.}
+Source and instrumentation are C and LLVM IR, with Python for the analysis and query tooling.
+Dataset records use CSV/JSON against a documented labeling schema, published alongside the data so
+a reader does not have to reconstruct what a category or a critical-variable field means.
+Benchmark cases carry pinned build manifests and container or emulator images so a rehosted target
+reconstructs exactly, and the packet inputs that trigger each case are stored as PCAP.
+Hardware measurements (trace captures, timing logs) are stored as CSV or the instrument's native
+binary format alongside a script that parses it.
+Documentation, including the Task~1.1 extraction decision procedure and inter-rater agreement
+method, is Markdown and PDF.
+Every record and every benchmark case carries provenance metadata: source CVE identifier, RTOS and
+version, build configuration, and disclosure status, so reuse does not require guessing context.
+
+\head{Access and Sharing.}
+GitHub is the working repository for code, data and documentation; tagged releases are mirrored to
+Zenodo with DOIs for long-term citability, and publications are deposited in NSF-PAR.
+Material under an active coordinated-disclosure embargo is held privately until a patch ships, at
+which point it is released with the rest of the benchmark; this is a temporary delay, not an
+access restriction, and nothing in this project is withheld from any country or class of user once
+disclosure completes.
+If a specific artifact remains sensitive even after disclosure, that case is reviewed by the PIs in
+consultation with the sponsored-research offices at UCCS and UTEP before release.
+
+\head{Reuse and Redistribution.}
+Software is released under a permissive license (MIT or BSD) and data and educational material
+under Creative Commons, so the community can reuse, redistribute and build derivatives with
+attribution.
+Where a benchmark case carries modified upstream RTOS source, redistribution respects that
+project's own license; we do not relicense third-party code, only the instrumentation, patches and
+analysis artifacts layered on it.
+The one thing never distributed is working exploit input for a vulnerability that is not yet
+patched, for the reason stated above.
+Version control and a public issue tracker on GitHub support responsible reuse and let other
+groups extend the benchmark independently of us, which is the stated goal of releasing it.
+
+\head{Archiving and Preservation.}
+Data, code and documentation are retained for at least three years beyond the end of the award on
+secured, backed-up servers at UCCS and UTEP under institutional IT policy, and mirrored
+indefinitely on GitHub and Zenodo so persistence does not depend on either institution's retention
+window alone.
+Publications remain accessible through publisher repositories and NSF-PAR.
+
+\head{Ethics and Responsible Disclosure.}
+The project involves no human subjects and no personally identifiable information: every record is
+a CVE advisory, source code, or a hardware or network measurement taken from equipment the team
+owns, so IRB review is not required.
+The applicable risk is dual-use, not privacy, and it is handled the same way throughout the
+proposal: exploitation is performed only on hardware the team owns or in emulation, no third-party
+or production device is targeted, and every confirmed variant enters coordinated disclosure with
+the affected project before publication or public release.
+
+\head{Prior Experience.}
+Both PIs have a record of releasing research artifacts responsibly.
+PI~Tan has open-sourced the CVE systematization this project extends~\cite{tan24sok} and prior
+Cortex-M control-flow defense prototypes~\cite{ma2023dac,tan2023sherloc}.
+Co-PI~Armanuzzaman has open-sourced ENOLA~\cite{armanuzzaman2026enola}, the control-flow
+attestation system RT~3 builds on, with its implementation and evaluation publicly released.
+Both PIs' capture-the-flag and course material has likewise been shared with the community they
+teach and compete in.
+
+\bibliographystyle{abbrv}
+\bibliography{bib/refs, bib/bibdata, bib/xi, bib/tomal}
+
+\end{document}
