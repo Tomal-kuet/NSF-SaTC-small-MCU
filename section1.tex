@@ -4,20 +4,31 @@
 \label{sec:overview}
 % ==========================================================
 
-\arman{CHECK CVE score, can we find some CVES to motivate this idea?}
-
 Embedded and cyber-physical systems have become fundamental components of modern computing infrastructure, supporting sensing, communication, control,
 and decision-making in applications ranging from industrial automation and transportation to medical devices, smart infrastructure, and the Internet of
-Things (IoT). Unlike traditional desktop and server systems, embedded devices often operate under tight computation, memory, energy, and timing constraints,
-interact directly with sensors and actuators, and remain deployed in the field for long periods of time. Consequently, compromise of an embedded device can
-affect not only software confidentiality and integrity, but also the physical processes that the device monitors or controls. Recognizing these risks, recent
-security guidance emphasizes that IoT and embedded devices require device-level cybersecurity capabilities that protect both the devices and the
-systems in which they operate~\cite{fagan2020iot,nist800213}.
+Things (IoT).
+The scale of this infrastructure is already immense and continues to grow: ARM alone has shipped more than 200 billion chips to date, with
+Cortex-M microcontrollers which is the class of device this proposal targets~\cite{arm2021chips}.
+This accounts for nearly half of that cumulative total and three-quarters of
+annual shipments, while the number of connected IoT devices is projected to reach 39 billion by the end of
+2030~\cite{iotanalytics2025}.
+Unlike traditional desktop and server systems, embedded devices often operate under tight computation, memory, energy, and timing constraints,
+interact directly with sensors and actuators, while remaining field deployed for years without any inspection of their software.
+Consequently, compromise of an embedded device can affect not only software confidentiality and integrity, but also the physical
+processes that the device monitors or controls, and it can remain undetected for as long as no operator is present to notice anomalous behavior.
+Recognizing these risks, recent guidance from multiple federal agencies now requires device-level cybersecurity capabilities spanning exactly the application domains named above: NIST's IoT Core Baseline profile underlies the U.S. Cyber Trust Mark consumer-labeling program~\cite{nist2022ir8425}, the FDA's 2023 premarket cybersecurity guidance is now a statutory requirement for medical devices~\cite{fda2023cybersecurity}, and CISA's Secure-by-Design principles, joined by seventeen U.S.\ and international partner agencies, call for the same shift toward built-in, continuously verifiable device trustworthiness this proposal pursues~\cite{cisa2023sbd}.
+
+These risks are not hypothetical.
+In July 2025, researchers exploited Bluetooth-stack vulnerabilities to achieve remote code execution on the infotainment ECUs of vehicles from Mercedes-Benz, Volkswagen, and \v{S}koda~\cite{perfektblue2025}.
+Beginning in 2023, attackers compromised programmable logic controllers (PLCs) across U.S. water and wastewater utilities using nothing more than default credentials, in one case seizing control of a Pennsylvania utility's booster station~\cite{cisa2023unitronics}.
+In 2020, a single vulnerable TCP/IP library embedded in hundreds of millions of devices across the healthcare, industrial, and transportation sectors was shown to allow remote code execution through one crafted network packet~\cite{cisa2020ripple20}, and a separate set of memory-corruption vulnerabilities disclosed the same year affected FreeRTOS+TCP itself~\cite{zimperium2018freertos}.
+Each incident shares a common structure: a memory-corruption or authentication flaw in one embedded software component was sufficient to compromise the physical behavior of a field-deployed, unattended device, with only a slow and costly recall or firmware push as remedy.
+\textbf{Because embedded and cyber-physical devices cannot rely on a human to notice compromise or a routine patch cycle to fix it, establishing and continuously verifying their trustworthiness, remotely and throughout deployment, is essential, not merely desirable.}
 
 Despite their increasing security responsibilities, embedded systems remain particularly challenging to protect. Their firmware is commonly implemented in
 memory-unsafe languages such as C and C++, and many resource-constrained platforms provide considerably less isolation than general-purpose computing
-systems. Memory-corruption vulnerabilities can therefore lead to control-flow hijacking, unauthorized memory or peripheral access, and complete software
-compromise~\cite{abera2016c,dessouky2017fat,sun2020oat,yadav2023whole}. Modern embedded platforms increasingly provide hardware security mechanisms---including secure boot, memory
+systems, so the memory-corruption vulnerabilities above routinely lead to control-flow hijacking, unauthorized memory or peripheral access, and complete
+software compromise. Modern embedded platforms increasingly provide hardware security mechanisms---including secure boot, memory
 protection units (MPUs), trusted execution environments (TEEs), hardware cryptographic engines, and architectural control-flow protection---that can
 reduce these risks. However, the presence of these mechanisms alone does not establish that an embedded system remains trustworthy throughout its execution.
 
@@ -36,6 +47,7 @@ Thus, a second fundamental question is: \emph{how can embedded systems provide s
 A TEE is often treated as a single trusted domain even though it may contain multiple components, such as application logic, cryptographic services, parsers, communication code, and peripheral drivers. A vulnerability in one such component can therefore expose resources belonging to the entire trusted domain. Fine-grained compartmentalization can reduce this blast radius by restricting each component to the code, data, and peripherals that it requires.
 On resource-constrained MCUs, however, compartmentalization introduces additional challenges because MPU regions are limited and protection-state changes frequently require privileged transitions and reconfiguration.
 Furthermore, combining spatial isolation with architectural control-flow protection is not straightforward: shared authentication state, common runtime code, asynchronous interrupts, and partially updated protection state can create new cross-compartment attack opportunities.
+Even where isolation and control-flow protection are both correctly enforced, existing systems constrain how compartments may communicate but not what they may do with the data they legitimately exchange, leaving a confused-deputy vulnerability that no control-flow policy can detect.
 Existing mechanisms also provide little information to a remote verifier about which trusted component was affected by a violation and whether unaffected components can safely continue operation.
 
 These limitations reveal a broader scientific gap: \textbf{embedded trust is typically treated as a property established at a particular point in time, rather than as a property that must be established, verified, and preserved throughout system execution.}
@@ -99,10 +111,10 @@ Control-flow attestation enables a remote verifier to determine whether embedded
 
 This thrust will develop scalable runtime trust attestation for both bare-metal and RTOS-based systems. Control-flow evidence will form the core of the attestation and will be augmented with task transitions, context switches, interrupt execution, and selected security-critical interactions. We will develop novel evidence-compression and verification algorithms, compiler-based instrumentation, protected measurement runtimes, and hardware-assisted cryptographic mechanisms. The proposed methods will bound evidence size by static program and task structure rather than execution duration while enabling efficient remote verification.
 
-\textbf{Thrust 3: Evidence-Guided Trust Containment and Recovery}
-Existing MCU compartmentalization mechanisms isolate code, data, and peripherals using the MPU, but frequent privileged transitions and MPU reconfiguration can impose substantial switching overhead. Moreover, naively composing spatial isolation with control-flow protection introduces new cross-domain risks: shared authentication keys may permit signed control-flow state to be reused across compartments, shared runtime code can enlarge the valid branch-target set, and interrupts or faults may execute outside the active sandbox or observe partially updated protection state. Existing approaches also provide limited support for identifying the affected domain and preserving trust in unaffected components after a violation.
+\textbf{Thrust 3: Evidence-Guided Trust Containment and Recovery.}
+Existing MCU compartmentalization mechanisms isolate code, data, and peripherals using the MPU, but frequent privileged transitions and MPU reconfiguration can impose substantial switching overhead, and none analyzes correctness under nested, preempting interrupts. Moreover, naively composing spatial isolation with control-flow protection introduces new cross-domain risks: shared authentication keys may permit signed control-flow state to be reused across compartments, shared runtime code can enlarge the valid branch-target set, and interrupts or faults may execute outside the active sandbox or observe partially updated protection state. Even where isolation and control-flow protection are both enforced, existing systems constrain how compartments may communicate but not what they may do with the data they legitimately exchange -- a confused-deputy gap that lets a compromised compartment corrupt a co-resident compartment's state without ever violating a control-flow policy. Existing approaches also provide limited support for identifying the affected domain and preserving trust in unaffected components after a violation.
 
-This thrust will develop evidence-guided compartmentalization that jointly enforces spatial isolation, authenticated control-flow boundaries, and safe asynchronous execution. We will design compiler analyses and partitioning algorithms, authenticated transition mechanisms using hardware cryptographic support, interrupt-safe runtime components, and evidence-guided recovery protocols. The proposed techniques will distinguish interface-only boundaries from those requiring data or peripheral isolation, identify the scope of compromise, selectively restore and re-attest affected domains, and preserve trust in unaffected components.
+This thrust will develop real-time- and data-flow-aware compartmentalization with interrupt-safe transitions. We will design compiler-driven partitioning algorithms that jointly reason about MPU region constraints, real-time budgets, and DMA-capable peripherals; a formally verified transition monitor that routes every cross-compartment transfer through a fixed-priority exception rather than ad hoc interrupt masking; ambiguity-guided data-flow policies that enforce directional (read/write) MPU permissions where a dependence analysis can resolve a shared location's legitimate writer, and fall back to hardware-authenticated write tags only where it cannot; and evidence-guided recovery protocols that localize a violation to the affected compartment, contain it, and selectively restore and re-attest the rest of the system.
 
 \textbf{Intellectual Merit.}
 This project will advance the system architectures, hardware/software TCB design, and algorithms needed to establish, verify, and preserve trust in embedded systems.
