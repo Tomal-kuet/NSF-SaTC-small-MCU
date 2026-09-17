@@ -25,12 +25,14 @@ In 2020, a single vulnerable TCP/IP library embedded in hundreds of millions of 
 Each incident shares a common structure: a memory-corruption or authentication flaw in one embedded software component was sufficient to compromise the physical behavior of a field-deployed, unattended device, with only a slow and costly recall or firmware push as remedy.
 \textbf{Because embedded and cyber-physical devices cannot rely on a human to notice compromise or a routine patch cycle to fix it, establishing and continuously verifying their trustworthiness, remotely and throughout deployment, is essential, not merely desirable.}
 
-Despite their increasing security responsibilities, embedded systems remain particularly challenging to protect. Their firmware is commonly implemented in
-memory-unsafe languages such as C and C++, and many resource-constrained platforms provide considerably less isolation than general-purpose computing
-systems, so the memory-corruption vulnerabilities above routinely lead to control-flow hijacking, unauthorized memory or peripheral access, and complete
-software compromise. Modern embedded platforms increasingly provide hardware security mechanisms---including secure boot, memory
-protection units (MPUs), trusted execution environments (TEEs), hardware cryptographic engines, and architectural control-flow protection---that can
-reduce these risks. However, the presence of these mechanisms alone does not establish that an embedded system remains trustworthy throughout its execution.
+The firmware and software of these systems are commonly developed in memory-unsafe languages such as C and C++, and most resource-constrained MCUs
+provide weak process isolation due to the absence of a memory management unit (MMU), and hardware privilege is limited to only two levels: privileged and unprivileged, rather than a ring or exception-level hierarchy.
+As a result, the memory-corruption vulnerabilities above routinely lead to control-flow hijacking, unauthorized memory or peripheral access, and complete software compromise.
+Modern embedded platforms increasingly provide improved hardware security mechanisms, including secure boot, memory protection units (MPUs), trusted
+execution environments (TEEs), hardware cryptographic engines, and architectural control-flow protection such as ARM's Pointer Authentication and
+Branch Target Identification extension~\cite{m85}.
+However, the presence of these mechanisms alone neither guarantees that the hardware/software composition of the system can be verified nor that its
+trustworthiness holds throughout later execution.
 
 \textbf{First, existing systems provide limited ability to determine precisely what constitutes the trusted execution environment.}
 TEEs isolate security-sensitive software from less-trusted software and have become an important foundation for embedded security.
