@@ -87,49 +87,40 @@ containment and recovery following compromise.
 \begin{figure}[t]
 	\centering
 	\begin{tikzpicture}[
-			font=\small,
-			thrust/.style={draw, rounded corners, align=left, text width=4.9cm, inner sep=8pt, minimum height=3.6cm},
-			lifecycle/.style={draw, rounded corners, align=center, text width=15.4cm, inner sep=8pt},
+			font=\footnotesize,
+			thrust/.style={draw, rounded corners, align=center, text width=4.6cm, inner sep=5pt, minimum height=2.6cm},
+			lifecycle/.style={draw, rounded corners, align=left, text width=14.8cm, inner sep=5pt, minimum height=0.5cm},
 			arr/.style={-{Latex[length=3mm]}, line width=1.2mm},
 		]
 		\node[thrust, fill=green!10] (t1) {
-			\textbf{Thrust 1: Application-Specific\\Trusted Execution Domains}\\[4pt]
-			\begin{itemize}[leftmargin=1em, itemsep=2pt, topsep=2pt]
-				\item Explicit resource composition
-				\item Hardware-assisted isolation
-				\item Remote attestation of domain configuration
-			\end{itemize}
+			\textbf{Thrust 1: Application-Specific\\Trusted Execution Domains}\\[1pt]
+			{\scriptsize\raggedright
+			\textbf{Task 1.1:} Trusted-Domain Composition with least privilege\\[1pt]
+			\textbf{Task 1.2:} Verifiable Hardware/Software Establishment\par}
 		};
 		\node[thrust, fill=blue!8, right=6mm of t1] (t2) {
-			\textbf{Thrust 2: Scalable Runtime\\Trust Attestation}\\[4pt]
-			\begin{itemize}[leftmargin=1em, itemsep=2pt, topsep=2pt]
-				\item Control-flow and task evidence
-				\item Protected measurement state
-				\item Ambiguity-guided verifier algorithms
-			\end{itemize}
+			\textbf{Thrust 2: Scalable Runtime\\Trust Attestation}\\[1pt]
+			{\scriptsize\raggedright
+			\textbf{Task 2.1:} Compact Runtime Evidence\\[1pt]
+			\textbf{Task 2.2:} RTOS Interrupt \& Multitask Attestation\par}
 		};
 		\node[thrust, fill=violet!8, right=6mm of t2] (t3) {
-			\textbf{Thrust 3: Evidence-Guided\\Trust Containment and Recovery}\\[4pt]
-			\begin{itemize}[leftmargin=1em, itemsep=2pt, topsep=2pt]
-				\item Real-time- \& data-flow-aware partitioning
-				\item Ambiguity-guided data-flow integrity
-				\item Evidence-guided containment \& recovery
-			\end{itemize}
+			\textbf{Thrust 3: Evidence-Guided\\Trust Containment and Recovery}\\[1pt]
+			{\scriptsize\raggedright
+			\textbf{Task 3.1:} Data-Flow Aware Partitioning\\[1pt]
+			\textbf{Task 3.2:} Interrupt \& DMA Isolation\\[1pt]
+			\textbf{Task 3.3:} Containment \& Recovery\par}
 		};
+		\node[font=\scriptsize, above=0mm of t1] {\emph{TEE: Verifying Trust Anchor}};
+		\node[font=\scriptsize, above=0mm of t2] {\emph{REE: Runtime Evidence}};
+		\node[font=\scriptsize, above=0mm of t3] {\emph{REE: Application Decoupling}};
 		\draw[arr] (t1) -- (t2);
 		\draw[arr] (t2) -- (t3);
-
-		\node[lifecycle, fill=orange!6, below=9mm of t2] (life) {
-			\textbf{Unified Trust Lifecycle}\\[3pt]
-			Construct application-specific trusted environments; attest runtime behavior;\\
-			contain localized compromise; and selectively recover affected domains.
-		};
-		\draw[arr] (t1) -- (t1 |- life.north);
-		\draw[arr] (t2) -- (t2 |- life.north);
-		\draw[arr] (t3) -- (t3 |- life.north);
 	\end{tikzpicture}
-	\caption{Proposed research thrusts of \sys.}
+	\vspace{-0.2cm}
+	\caption{Proposed three research thrusts of \sys.}
 	\label{fig:thrusts}
+	\vspace{-0.4cm}
 \end{figure}
 
 \subsection{Proposed Research}
