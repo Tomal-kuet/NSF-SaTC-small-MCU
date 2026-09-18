@@ -62,7 +62,7 @@ Finally, we will treat DMA transfer requests as cross-domain calls rather than u
 
 \begin{wrapfigure}{r}{0.48\textwidth}
 	\centering
-	\vspace{-8pt}
+	%\vspace{-8pt}
 	\begin{tikzpicture}[
 			font=\tiny,
 			box/.style={draw, rounded corners, align=center, minimum height=0.7cm, inner sep=2.5pt, fill=white},
@@ -91,9 +91,13 @@ Where the analysis cannot statically bound the reaching writer -- due to pointer
 
 \textbf{Task 3.3: Evidence-Guided Trust Containment and Recovery.}
 
+
+We will unify the three enforcement points developed above -- MPU faults, transition-monitor violations, and data-flow tag mismatches -- into a single compact evidence report that extends Task~2.1's encoding with a compartment identifier, the faulting program counter, and the last authenticated transition (Figure~\ref{fig:t33}). On detecting a violation, the runtime will revoke only the faulting compartment's MPU regions and invalidate its entry in the secure task-to-key mapping Thrust~2 already maintains, rather than halting or resetting the device. The same evidence report lets the verifier establish that no \emph{other} compartment accepted a transition or a data-flow tag traceable to the faulting compartment after the point of compromise -- a guarantee scoped to the authenticated channels Tasks~3.1 and 3.2 enforce, not a claim that the faulting compartment caused no harm through its own, otherwise-legitimate actions prior to detection, which no detection-based mechanism can rule out.
+
+
 \begin{wrapfigure}{r}{0.48\textwidth}
 	\centering
-	\vspace{-8pt}
+	%\vspace{-8pt}
 	\begin{tikzpicture}[
 			font=\tiny,
 			box/.style={draw, rounded corners, align=center, minimum height=0.7cm, inner sep=2.5pt, fill=white},
@@ -115,7 +119,5 @@ Where the analysis cannot statically bound the reaching writer -- due to pointer
 	\label{fig:t33}
 	\vspace{-10pt}
 \end{wrapfigure}
-
-We will unify the three enforcement points developed above -- MPU faults, transition-monitor violations, and data-flow tag mismatches -- into a single compact evidence report that extends Task~2.1's encoding with a compartment identifier, the faulting program counter, and the last authenticated transition (Figure~\ref{fig:t33}). On detecting a violation, the runtime will revoke only the faulting compartment's MPU regions and invalidate its entry in the secure task-to-key mapping Thrust~2 already maintains, rather than halting or resetting the device. The same evidence report lets the verifier establish that no \emph{other} compartment accepted a transition or a data-flow tag traceable to the faulting compartment after the point of compromise -- a guarantee scoped to the authenticated channels Tasks~3.1 and 3.2 enforce, not a claim that the faulting compartment caused no harm through its own, otherwise-legitimate actions prior to detection, which no detection-based mechanism can rule out.
 
 We will then investigate selective re-provisioning and re-attestation protocols that reconstruct only the affected compartment's trusted-domain measurement, reusing the domain-construction and attestation mechanisms developed in Thrust~1, and re-admit the compartment into the running system once it is re-verified, avoiding a full-device reboot or re-attestation cycle. A central challenge is bounding how much containment state -- revocation lists and per-compartment key epochs -- must be retained across compartments so that a recovered compartment cannot replay stale evidence or reuse a revoked key, while keeping this bookkeeping compatible with the real-time budgets established in Task~3.1.
