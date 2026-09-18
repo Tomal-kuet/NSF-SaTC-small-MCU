@@ -45,7 +45,7 @@ A central objective is to jointly optimize prover-side evidence generation and v
 
 As preliminary work, we developed \enola~\cite{armanuzzaman2026enola}, which demonstrates that scalable control-flow evidence can be generated on commodity embedded processors without modifying the processor architecture.
 As illustrated in Figure~\ref{fig:enola}, the verifier first issues a fresh challenge, after which the trusted \enola attestation engine initializes the measurement keys and protection mechanisms.
-During program execution, compiler-inserted instrumentation records a basic-block occurrence trace while Arm Pointer Authentication instructions incrementally compute separate measurements for forward and backward control-flow transfers.
+During program execution, compiler-inserted instrumentation records a basic-block occurrence trace while ARM Pointer Authentication instructions incrementally compute separate measurements for forward and backward control-flow transfers.
 The occurrence trace is maintained in TrustZone-protected memory, whereas the forward and backward measurements are retained in compiler-reserved registers so that they are not exposed to ordinary program memory.
 At the end of execution, these components are combined with the verifier challenge into an authenticated report and transmitted to the verifier, which reconstructs candidate execution paths and validates them against the received measurements.
 This design makes the transmitted authenticator linear in the number of program basic blocks rather than the length of the executed path and substantially reduces communication cost.
