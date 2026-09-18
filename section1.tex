@@ -35,22 +35,20 @@ However, the presence of these mechanisms alone neither guarantees that the hard
 trustworthiness holds throughout later execution.
 
 \textbf{First, existing systems provide limited ability to determine precisely what constitutes the trusted execution environment.}
-TEEs isolate security-sensitive software from less-trusted software and have become an important foundation for embedded security.
-However, conventional TEE designs typically expose a fixed, platform-defined trusted computing base (TCB). Trusted and untrusted workloads may share processors, caches, memory hierarchies, interrupt infrastructure, and peripherals, while applications are given limited ability to select the hardware and software resources that should belong to their trusted environment. As a result, the trusted boundary may contain resources and privileged software that are unnecessary for a particular
-application, increasing both the TCB and the potential attack surface.
-Reconfigurable embedded hardware provides an opportunity to rethink this assumption: FPGA-based SoCs can construct isolated execution domains using explicitly selected processing, memory, peripheral, and communication resources~\cite{armanuzzaman2024building}. Yet a fundamental question remains: \emph{how can an embedded system construct an application-specific trusted execution environment whose hardware and software composition can itself be verified by a remote party?}
+Prior work has pursued more flexible trusted execution along two lines, but neither produces an application-specific, remotely verifiable composition.
+vTZ~\cite{hua2017vtz}, Sanctuary~\cite{brasser2019sanctuary}, and Keystone~\cite{Keystone2020} construct multiple isolated domains by virtualizing TrustZone and partitioning memory access, but TEE and REE still time-share the hardware resources, leaving them susceptible to side-channel attacks.
+RISC-V-specific or new-hardware solutions such as CURE~\cite{bahmani2021cure}, Composite Enclaves~\cite{schneider2020pie}, and HECTOR-V~\cite{nasahl2020hector} instead grant exclusive access to cores, caches, or peripherals, but are not deployable on off-the-shelf platforms, and none produces a manifest of the resulting composition that a remote verifier can check against what the application actually requested.
+Reconfigurable hardware suggests a way out~\cite{armanuzzaman2024building}, but a fundamental question remains: \emph{\ul{how can an embedded system construct an application-specific trusted execution environment whose hardware and software composition can itself be verified by a remote party?}}
 
 \textbf{Second, establishing a trusted environment does not guarantee that its software continues to execute as intended.}
-Secure boot and conventional remote attestation can establish properties of software identity or initial system state, but a correctly loaded program can later be compromised through a runtime vulnerability. Control-flow attestation (CFA) addresses this gap by allowing a remote verifier to reason about the execution path taken by a program~\cite{abera2016c,dessouky2017fat,sun2020oat,yadav2023whole}. However, existing CFA approaches remain difficult to apply to resource-constrained and long-running embedded workloads. Evidence may grow with execution duration or program complexity, while software-based measurement, protected-domain transitions, and cryptographic operations can introduce significant runtime overhead.
-Moreover, realistic embedded systems are event driven: interrupts, exception handling, callbacks, RTOS scheduling, task transitions, and context switches can alter execution in ways that are not adequately represented by a simple single-program control-flow trace.
-Thus, a second fundamental question is: \emph{how can embedded systems provide scalable and protected runtime evidence that enables a verifier to reason about authorized execution across bare-metal and multitasking environments without evidence growing with execution duration?}
+A correctly loaded program can later be compromised through a runtime attack (e.g, ROP, JOP, Data-only) that secure boot and conventional attestation cannot see.
+Control-flow attestation narrows this gap: C-FLAT~\cite{abera2016c}, OAT~\cite{sun2020oat}, ARI~\cite{wangari}, and whole-program path attestation~\cite{yadav2023whole} allows remote verifier reason about the execution path a program took, however but their evidence or measurement cost still grows with execution duration or program complexity, and none adequately represents the interrupts, task transitions, and context switches of realistic bare-metal and RTOS execution rather than a single-program trace.
+Thus, a second fundamental question is: \emph{\ul{how can embedded systems provide scalable and protected runtime evidence that enables a verifier to detect runtime violations across bare-metal and multitasking environments without evidence growing with execution duration?}}
 
 \textbf{Third, existing trusted execution mechanisms provide limited support for preserving trust after a localized compromise.}
-A TEE is often treated as a single trusted domain even though it may contain multiple components, such as application logic, cryptographic services, parsers, communication code, and peripheral drivers. A vulnerability in one such component can therefore expose resources belonging to the entire trusted domain. Fine-grained compartmentalization can reduce this blast radius by restricting each component to the code, data, and peripherals that it requires.
-On resource-constrained MCUs, however, compartmentalization introduces additional challenges because MPU regions are limited and protection-state changes frequently require privileged transitions and reconfiguration.
-Furthermore, combining spatial isolation with architectural control-flow protection is not straightforward: shared authentication state, common runtime code, asynchronous interrupts, and partially updated protection state can create new cross-compartment attack opportunities.
-Even where isolation and control-flow protection are both correctly enforced, existing systems constrain how compartments may communicate but not what they may do with the data they legitimately exchange, leaving a confused-deputy vulnerability that no control-flow policy can detect.
-Existing mechanisms also provide little information to a remote verifier about which trusted component was affected by a violation and whether unaffected components can safely continue operation.
+An application-specific trusted domain protects only the most security-critical logic; the bulk of embedded firmware still runs as a single, monolithic normal-world RTOS application sharing one privilege level and address space, so one vulnerability can compromise the entire device.
+Existing MCU compartmentalization mechanisms~\cite{clements2018aces,kim2018securing,khan2023ec,mera2022d} isolate code, data, and peripherals, but none safely composes this isolation with control-flow protection under interrupts, enforces fine-grained access control over shared data, or provides a remote verifier with evidence to localize and recover from a compromised compartment.
+Thus, a third fundamental question is: \emph{\ul{how can an MCU's normal-world application be fine-grained and interrupt-safe compartmentalized regarding both control and data flow, so that a violation produces evidence letting a remote verifier localize, contain, and selectively recover from it?}}
 
 These limitations reveal a broader scientific gap: \textbf{embedded trust is typically treated as a property established at a particular point in time, rather than as a property that must be established, verified, and preserved throughout system execution.}
 Knowing that the expected software was loaded does not establish whether the execution environment contained only the necessary trusted resources; knowing the initial environment does not establish whether the software subsequently followed authorized behavior; and detecting a runtime violation does not by itself determine which part of the trusted system must lose trust. Addressing these questions independently therefore leaves gaps between trusted-environment construction, runtime verification, and post-compromise response.
@@ -60,7 +58,7 @@ resource-constrained embedded systems. VEST will investigate how trusted executi
 software resources and exposed to a remote verifier; how hardware-assisted runtime evidence can efficiently represent control-flow, task, interrupt, and
 other security-relevant execution events; and how runtime evidence can be combined with fine-grained isolation to determine the scope of a violation,
 contain affected components, and selectively restore and re-attest them.
-Rather than treating trusted execution, runtime attestation, and compartmentalization as independent mechanisms, \sys will connect them through a common trust lifecycle in which the verifier can reason about \emph{what environment was established}, \emph{how that environment executed}, and \emph{what remains trustworthy following a localized compromise}.
+Rather than treating trusted execution, runtime attestation, and compartmentalization as independent mechanisms, \sys will connect them through a common trust lifecycle in which the verifier can reason about \emph{\ul{what environment was established}}, \emph{\ul{how that environment executed}}, and \emph{\ul{what remains trustworthy following a localized compromise}}.
 
 Accordingly, the project is driven by three overarching research objectives:
 
@@ -88,8 +86,49 @@ reasoned about from system construction, through runtime execution, to
 containment and recovery following compromise.
 \begin{figure}[t]
 	\centering
-	\includegraphics[width=0.98\linewidth]{figs/VEST_thrusts.pdf}
-	\caption{Proposed research trusts of \sys}
+	\begin{tikzpicture}[
+			font=\small,
+			thrust/.style={draw, rounded corners, align=left, text width=4.9cm, inner sep=8pt, minimum height=3.6cm},
+			lifecycle/.style={draw, rounded corners, align=center, text width=15.4cm, inner sep=8pt},
+			arr/.style={-{Latex[length=3mm]}, line width=1.2mm},
+		]
+		\node[thrust, fill=green!10] (t1) {
+			\textbf{Thrust 1: Application-Specific\\Trusted Execution Domains}\\[4pt]
+			\begin{itemize}[leftmargin=1em, itemsep=2pt, topsep=2pt]
+				\item Explicit resource composition
+				\item Hardware-assisted isolation
+				\item Remote attestation of domain configuration
+			\end{itemize}
+		};
+		\node[thrust, fill=blue!8, right=6mm of t1] (t2) {
+			\textbf{Thrust 2: Scalable Runtime\\Trust Attestation}\\[4pt]
+			\begin{itemize}[leftmargin=1em, itemsep=2pt, topsep=2pt]
+				\item Control-flow and task evidence
+				\item Protected measurement state
+				\item Ambiguity-guided verifier algorithms
+			\end{itemize}
+		};
+		\node[thrust, fill=violet!8, right=6mm of t2] (t3) {
+			\textbf{Thrust 3: Evidence-Guided\\Trust Containment and Recovery}\\[4pt]
+			\begin{itemize}[leftmargin=1em, itemsep=2pt, topsep=2pt]
+				\item Real-time- \& data-flow-aware partitioning
+				\item Ambiguity-guided data-flow integrity
+				\item Evidence-guided containment \& recovery
+			\end{itemize}
+		};
+		\draw[arr] (t1) -- (t2);
+		\draw[arr] (t2) -- (t3);
+
+		\node[lifecycle, fill=orange!6, below=9mm of t2] (life) {
+			\textbf{Unified Trust Lifecycle}\\[3pt]
+			Construct application-specific trusted environments; attest runtime behavior;\\
+			contain localized compromise; and selectively recover affected domains.
+		};
+		\draw[arr] (t1) -- (t1 |- life.north);
+		\draw[arr] (t2) -- (t2 |- life.north);
+		\draw[arr] (t3) -- (t3 |- life.north);
+	\end{tikzpicture}
+	\caption{Proposed research thrusts of \sys.}
 	\label{fig:thrusts}
 \end{figure}
 
