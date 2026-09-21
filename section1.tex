@@ -4,14 +4,13 @@
 \label{sec:overview}
 % ==========================================================
 
-Embedded and cyber-physical systems have become fundamental components of modern computing infrastructure, supporting sensing, communication, control,
+Embedded systems have become fundamental components of modern computing infrastructure, supporting sensing, communication, control,
 and decision-making in applications ranging from industrial automation and transportation to medical devices, smart infrastructure, and the Internet of
 Things (IoT).
-The scale of this infrastructure is already immense and continues to grow: ARM alone has shipped more than 200 billion chips to date, with
-Cortex-M microcontrollers which is the class of device this proposal targets~\cite{arm2021chips}.
-This accounts for nearly half of that cumulative total and three-quarters of
-annual shipments, while the number of connected IoT devices is projected to reach 39 billion by the end of
-2030~\cite{iotanalytics2025}.
+Two ARM processor classes dominate this landscape.
+Cortex-M microcontrollers (MCUs) run bare-metal or RTOS firmware without a memory management unit (MMU) and account for three-quarters of ARM's annual chip shipments and almost half of the more than 200 billion chips it has shipped to date~\cite{arm2021chips}.
+Cortex-A application processors, which provide an MMU and run Linux-class software, are increasingly used in automotive cockpit and driver-assistance platforms~\cite{arm2024automotive} and in IoT and edge-AI devices such as smart cameras and factory-floor machines~\cite{arm2025a320}.
+The number of connected IoT devices alone is projected to reach 39 billion by the end of 2030~\cite{iotanalytics2025}.
 Unlike traditional desktop and server systems, embedded devices often operate under tight computation, memory, energy, and timing constraints,
 interact directly with sensors and actuators, while remaining field deployed for years without any inspection of their software.
 Consequently, compromise of an embedded device can affect not only software confidentiality and integrity, but also the physical
@@ -23,22 +22,25 @@ In July 2025, researchers exploited Bluetooth-stack vulnerabilities to achieve r
 Beginning in 2023, attackers compromised programmable logic controllers (PLCs) across U.S. water and wastewater utilities using nothing more than default credentials, in one case seizing control of a Pennsylvania utility's booster station~\cite{cisa2023unitronics}.
 In 2020, a single vulnerable TCP/IP library embedded in hundreds of millions of devices across the healthcare, industrial, and transportation sectors was shown to allow remote code execution through one crafted network packet~\cite{cisa2020ripple20}, and a separate set of memory-corruption vulnerabilities disclosed the same year affected FreeRTOS+TCP itself~\cite{zimperium2018freertos}.
 Each incident shares a common structure: a memory-corruption or authentication flaw in one embedded software component was sufficient to compromise the physical behavior of a field-deployed, unattended device, with only a slow and costly recall or firmware push as remedy.
-\textbf{Because embedded and cyber-physical devices cannot rely on a human to notice compromise or a routine patch cycle to fix it, establishing and continuously verifying their trustworthiness, remotely and throughout deployment, is essential, not merely desirable.}
+\textbf{Because embedded devices cannot rely on a human to notice compromise or a routine patch cycle to fix it, establishing and continuously verifying their trustworthiness, remotely and throughout deployment, is essential, not merely desirable.}
 
-The firmware and software of these systems are commonly developed in memory-unsafe languages such as C and C++, and most resource-constrained MCUs
-provide weak process isolation due to the absence of a memory management unit (MMU), and hardware privilege is limited to only two levels: privileged and unprivileged, rather than a ring or exception-level hierarchy.
-As a result, the memory-corruption vulnerabilities above routinely lead to control-flow hijacking, unauthorized memory or peripheral access, and complete software compromise.
+The firmware and software of these systems are commonly developed in memory-unsafe languages such as C and C++.
+On Cortex-M, weak process isolation results from the absence of an MMU and only two hardware privilege levels, privileged and unprivileged, rather than an exception-level hierarchy, so the memory-corruption vulnerabilities above routinely lead to control-flow hijacking, unauthorized memory or peripheral access, and complete software compromise.
+Cortex-A systems have an MMU and exception levels, which strengthen isolation among Normal-world processes.
+Yet the TEEs that both classes provide through ARM TrustZone offer only a single Secure world, in which privileged secure-side software, such as the TEE OS or secure firmware and its drivers, shares one hardware protection domain and can read all Normal-world memory, so a flaw in it can expose every trusted service and the Normal world~\cite{pinto2019demystifying,cerdeira2020sok,cerdeira2022rezone,kuhne2024aster}.
 Modern embedded platforms increasingly provide improved hardware security mechanisms, including secure boot, memory protection units (MPUs), trusted
 execution environments (TEEs), hardware cryptographic engines, and architectural control-flow protection such as ARM's Pointer Authentication and
 Branch Target Identification extension~\cite{m85}.
+On Cortex-A, ARM's Confidential Compute Architecture (CCA) further adds Granule Protection Tables that let trusted firmware control access to physical memory per granule~\cite{li2022design}; ARM positions CCA for both cloud and edge workloads~\cite{armcca}, and it is arriving in automotive-class silicon such as Neoverse V3AE~\cite{arm2024v3ae}.
 However, the presence of these mechanisms alone neither guarantees that the hardware/software composition of the system can be verified nor that its
 trustworthiness holds throughout later execution.
 
 \textbf{First, existing systems provide limited ability to determine precisely what constitutes the trusted execution environment.}
-Prior work has pursued more flexible trusted execution along two lines, but neither produces an application-specific, remotely verifiable composition.
+Prior work has pursued more flexible trusted execution along several lines, but none makes the composition of an application-specific trusted domain remotely verifiable on off-the-shelf hardware.
 vTZ~\cite{hua2017vtz}, Sanctuary~\cite{brasser2019sanctuary}, and Keystone~\cite{Keystone2020} construct multiple isolated domains by virtualizing TrustZone and partitioning memory access, but TEE and REE still time-share the hardware resources, leaving them susceptible to side-channel attacks.
-RISC-V-specific or new-hardware solutions such as CURE~\cite{bahmani2021cure}, Composite Enclaves~\cite{schneider2020pie}, and HECTOR-V~\cite{nasahl2020hector} instead grant exclusive access to cores, caches, or peripherals, but are not deployable on off-the-shelf platforms, and none produces a manifest of the resulting composition that a remote verifier can check against what the application actually requested.
-Reconfigurable hardware suggests a way out~\cite{armanuzzaman2024building}, but a fundamental question remains: \emph{\ul{how can an embedded system construct an application-specific trusted execution environment whose hardware and software composition can itself be verified by a remote party?}}
+RISC-V-specific or new-hardware solutions such as CURE~\cite{bahmani2021cure}, Composite Enclaves~\cite{schneider2020pie}, and HECTOR-V~\cite{nasahl2020hector} instead grant exclusive access to cores, caches, or peripherals, but are not deployable on off-the-shelf platforms.
+On Cortex-A, ReZone~\cite{cerdeira2022rezone} partitions the TrustZone Secure world but relies on SoC-specific controllers, and recent CCA work isolates user-space applications~\cite{zhang2023shelter}, Realm sandboxes~\cite{kuhne2024aster}, or Realm communication~\cite{sadi2026sharing}, but none decomposes the Secure world or makes the resources that compose a domain verifiable.
+Reconfigurable hardware~\cite{armanuzzaman2024building} and, on Cortex-A, CCA's granule protection suggest ways out, but a fundamental question remains: \emph{\ul{how can an embedded system construct an application-specific trusted execution environment whose hardware and software composition can itself be verified by a remote party?}}
 
 \textbf{Second, establishing a trusted environment does not guarantee that its software continues to execute as intended.}
 A correctly loaded program can later be compromised through a runtime attack (e.g, ROP, JOP, Data-only) that secure boot and conventional attestation cannot see.
@@ -51,12 +53,12 @@ Existing MCU compartmentalization mechanisms~\cite{clements2018aces,kim2018secur
 Thus, a third fundamental question is: \emph{\ul{how can an MCU's normal-world application be fine-grained and interrupt-safe compartmentalized regarding both control and data flow, so that a violation produces evidence letting a remote verifier localize, contain, and selectively recover from it?}}
 
 These limitations share a common root: \textbf{embedded trust is typically treated as a property established at a particular point in time, rather than as a property that must be established, verified, and preserved throughout system execution.}
-This project proposes \sys: \textit{\underline{V}erifiable Trust \underline{E}stablishment for Embedded \underline{S}ys\underline{t}ems}, with the objective of developing a continuous trust model for
-resource-constrained embedded systems. VEST will investigate how trusted execution environments can be constructed from explicitly selected hardware and
-software resources and exposed to a remote verifier; how hardware-assisted runtime evidence can efficiently represent control-flow, task, interrupt, and
+This project proposes \sys: \textit{\underline{V}erifiable Trust \underline{E}stablishment for Embedded \underline{S}ys\underline{t}ems}, with the objective of developing a continuous trust model for embedded systems.
+VEST will investigate how trusted execution environments can be constructed from explicitly selected hardware and software resources and exposed to a remote verifier; how hardware-assisted runtime evidence can efficiently represent control-flow, task, interrupt, and
 other security-relevant execution events; and how runtime evidence can be combined with fine-grained isolation to determine the scope of a violation,
 contain affected components, and selectively restore and re-attest them.
 Rather than treating trusted execution, runtime attestation, and compartmentalization as independent mechanisms, \sys will connect them through a common trust lifecycle in which the verifier can reason about \emph{\ul{what environment was established}}, \emph{\ul{how that environment executed}}, and \emph{\ul{what remains trustworthy following a localized compromise}}.
+Thrust~1 spans reconfigurable SoC FPGAs and Cortex-A processors through ARM CCA, while Thrusts~2 and~3 target Cortex-M bare-metal and RTOS software, where the absence of an MMU makes runtime evidence and MPU-based compartmentalization most critical.
 
 Accordingly, the project is driven by three overarching research objectives:
 
@@ -129,12 +131,15 @@ To establish trust, \sys will construct application-specific trusted execution d
 To maintain trust, \sys will develop scalable runtime attestation for bare-metal and RTOS-based systems, with evidence that captures control flow, task transitions, interrupts, and other security-relevant events without growing with execution duration.
 To preserve trust after compromise, \sys will combine runtime evidence with verification-aware compartmentalization to localize violations, enforce authenticated boundaries, and selectively recover and re-attest affected domains while retaining trust in unaffected components.
 
-We plan to realize this vision by leveraging embedded-system-specific hardware capabilities—including configurable processing resources, memory protection, trusted execution support, hardware cryptographic engines, and control-flow protection—through the following three research thrusts:
+We plan to realize this vision by leveraging embedded-system-specific hardware capabilities—including configurable processing resources, memory protection, ARM CCA's granule-based physical-memory protection, trusted execution support, hardware cryptographic engines, and control-flow protection—through the following three research thrusts:
 
 \textbf{Thrust 1: Application-Specific Trusted Execution Domains.}
-Conventional embedded TEEs multiplex trusted and untrusted workloads on the same processor and rely on fixed, platform-defined trust boundaries. Sharing processor time, caches, memory hierarchies, interrupt logic, and peripherals can introduce temporal interference, increase cross-domain exposure, and create side-channel risks. Moreover, applications cannot tailor the trusted hardware and software resources to their security requirements.
+Conventional embedded TEEs multiplex trusted and untrusted workloads on the same processor and rely on fixed, platform-defined trust boundaries; in TrustZone, the entire Secure world is one protection domain. Sharing processor time, caches, memory hierarchies, interrupt logic, and peripherals can introduce temporal interference, increase cross-domain exposure, and create side-channel risks. Moreover, applications cannot tailor the trusted hardware and software resources to their security requirements.
 
-This thrust will develop methods for constructing application-specific trusted execution domains from explicitly selected processing, memory, peripheral, communication, acceleration, and attestation resources. We will investigate new system architectures, resource-allocation and composition algorithms, hardware-assisted isolation, and attestation protocols that expose the security-relevant domain configuration to a remote verifier. The resulting domains will allow a verifier to confirm both the trusted software and the execution environment that protects it.
+This thrust will develop methods for constructing application-specific trusted execution domains from explicitly selected processing, memory, peripheral, communication, acceleration, and attestation resources.
+We will investigate new system architectures, resource-allocation and composition algorithms, hardware-assisted isolation, and attestation protocols that expose the security-relevant domain configuration to a remote verifier.
+We will realize such domains both on reconfigurable SoC FPGAs and, through firmware alone, on Cortex-A processors by using ARM CCA's Granule Protection Tables to decouple the Secure world into least-privilege domains.
+The resulting domains will allow a verifier to confirm both the trusted software and the execution environment that protects it.
 
 \textbf{Thrust 2: Scalable Runtime Trust Attestation.}
 Control-flow attestation enables a remote verifier to determine whether embedded software followed an authorized execution path and thereby detect control-flow hijacking. However, existing approaches are difficult to deploy on resource-constrained and long-running systems because their evidence can grow with program complexity or execution duration. Measurement computation, trusted-world transitions, and protection of cryptographic state can also impose substantial overhead, while support for interrupts, asynchronous events, and multitasking execution remains limited.
