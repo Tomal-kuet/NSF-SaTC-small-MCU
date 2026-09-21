@@ -6,7 +6,7 @@
 Trusted execution environments (TEEs) provide an important foundation for protecting security-sensitive computation, but their trust boundaries are typically determined by the underlying platform rather than by the requirements of individual applications~\cite{mccune2008flicker,hua2017vtz,koeberl2014trustlite,brasser2019sanctuary,sun2015trustice}.
 Different embedded applications, however, have fundamentally different security and resource requirements. One application may require only a processor, private memory, and access to a sensor, while another may additionally require communication interfaces, cryptographic services, or other peripherals~\cite{armanuzzaman2024building,hwang2021ambassy,teeod}.
 Nevertheless, conventional TEEs often expose these applications to a fixed hardware/software trusted computing base (TCB), causing them to trust resources and privileged components that are unnecessary for their execution~\cite{schneider2020pie,gross2019breaking,cerdeira2020sok}.
-This over-provisioning violates least privilege, enlarges the TCB, and increases the attack surface.
+This over-provisioning violates least privilege, enlarges the TCB, and increases the attack surface; in ARM TrustZone, for instance, all Secure-world software shares one protection domain and can read all Normal-world memory~\cite{cerdeira2022rezone,kuhne2024aster}.
 
 A second limitation is that the composition of the trusted environment is often not explicit to a remote verifier~\cite{lebedev2019sanctorum,nunes2019vrased,armanuzzaman2024building}.
 Existing attestation mechanisms primarily establish the identity or integrity of trusted software, while the verifier must largely assume that the underlying processors, memory, peripherals, communication paths, and protection mechanisms constitute the intended execution environment~\cite{nunes2019vrased,armanuzzaman2024building}.
@@ -17,7 +17,7 @@ This thrust asks the following fundamental question: \textbf{\textit{How can emb
 
 
 \textbf{Related Work.}
-Prior work has explored more flexible trusted execution along three lines, but none produces an application-specific, remotely verifiable composition on deployed hardware. vTZ~\cite{hua2017vtz}, Sanctuary~\cite{brasser2019sanctuary}, TrustICE~\cite{sun2015trustice}, uTango~\cite{oliveira2021utango}, and Keystone~\cite{Keystone2020} construct multiple isolated domains by virtualizing TrustZone, partitioning memory access, running a normal-world monitor, using Cortex-M's secure attribution unit, or configuring RISC-V's PMP, respectively, but in each case the TEE and REE still time-share the same CPU and other hardware resources, leaving them susceptible to side-channel attacks rather than truly separated~\cite{armanuzzaman2024building}. CURE~\cite{bahmani2021cure}, Composite Enclaves~\cite{schneider2020pie}, and HECTOR-V~\cite{nasahl2020hector} instead grant exclusive access to specific resources -- cores, caches, or peripherals -- but all three depend on RISC-V's PMP feature or new hardware primitives unavailable on deployed, off-the-shelf platforms. SGXIO~\cite{weiser2017sgxio} and SGX-FPGA~\cite{xia2021sgx} instead focus narrowly on protecting the I/O path between a CPU and an accelerator, rather than the composition of a trusted domain as a whole. None of these approaches makes an application's complete hardware/software trust boundary explicit, application-specific, and remotely verifiable as a single checkable property. Thrust~1 addresses this gap by treating trusted-domain composition itself as a verifiable system property.
+Prior work has explored more flexible trusted execution along several lines, but none makes the composition of an application-specific trusted domain remotely verifiable on off-the-shelf hardware. vTZ~\cite{hua2017vtz}, Sanctuary~\cite{brasser2019sanctuary}, TrustICE~\cite{sun2015trustice}, uTango~\cite{oliveira2021utango}, and Keystone~\cite{Keystone2020} construct multiple isolated domains by virtualizing TrustZone, partitioning memory access, running a normal-world monitor, using Cortex-M's secure attribution unit, or configuring RISC-V's PMP, respectively, but in each case the TEE and REE still time-share the same CPU and other hardware resources, leaving them susceptible to side-channel attacks rather than truly separated~\cite{armanuzzaman2024building}. CURE~\cite{bahmani2021cure}, Composite Enclaves~\cite{schneider2020pie}, and HECTOR-V~\cite{nasahl2020hector} instead grant exclusive access to specific resources -- cores, caches, or peripherals -- but all three depend on RISC-V's PMP feature or custom hardware extensions unavailable on deployed, off-the-shelf platforms. SGXIO~\cite{weiser2017sgxio} and SGX-FPGA~\cite{xia2021sgx} instead focus narrowly on protecting the I/O path between a CPU and an accelerator, rather than the composition of a trusted domain as a whole. On ARM, ReZone~\cite{cerdeira2022rezone} reduces TEE privilege by partitioning the TrustZone Secure world into zones, but relies on SoC-specific protection controllers and does not make the zone composition verifiable. Recent CCA work isolates Normal-world user-space applications (Shelter~\cite{zhang2023shelter}), relocates Android TEE services into RMM-managed Realm sandboxes with virtio-based I/O (Aster~\cite{kuhne2024aster}), or attests communication among Realms in cloud settings (Mica~\cite{sadi2026sharing}, CAEC~\cite{abdollahi2026caec}); none applies this to the Secure world or covers the platform resources (MMIO peripherals, interrupts, and DMA masters) that constitute a domain. None of these approaches makes an application's complete hardware/software trust boundary explicit, application-specific, and remotely verifiable as a single checkable property. Thrust~1 addresses this gap by treating trusted-domain composition itself as a verifiable system property.
 
 
 \begin{comment}
@@ -56,17 +56,58 @@ The FCM securely configures and measures the FPGA hardware realization of the tr
 Task~1.2 builds on these mechanisms to investigate verifiable trusted-domain establishment across broader embedded architectures.
 
 
-We will extend this composition model to fixed-silicon embedded platforms, including ARM Cortex-A, ARM Cortex-M, and RISC-V systems~\cite{ArmCortexA, m85,rsicv}.
-Because these platforms cannot instantiate new hardware resources per application, the trusted domain must instead be realized by configuring existing protection and resource-assignment mechanisms. We will develop an architecture-independent domain specification and platform-specific mappings that translate it into mechanisms such as core assignment, TrustZone security configuration, MPU/PMP or MMU protection, interrupt routing, peripheral permissions, and DMA/IOMMU controls.
-A key challenge is determining whether a requested trust boundary can be faithfully realized on a given architecture and identifying configurations that preserve least privilege and isolation when hardware capabilities differ across platforms.
+\begin{wrapfigure}{r}{0.48\textwidth}
+	\centering
+	\vspace{-8pt}
+	\begin{tikzpicture}[
+			font=\tiny,
+			world/.style={draw, rounded corners=2pt, align=center, inner sep=2pt, text width=1.55cm, minimum height=1.9cm},
+			dom/.style={world, fill=green!14},
+			arr/.style={-{Latex[length=1.3mm]}, thick},
+			darr/.style={{Latex[length=1.3mm]}-{Latex[length=1.3mm]}, thick, dashed},
+		]
+		% ---- Normal world and decoupled Secure-world domains ----
+		\node[world, fill=gray!18] (nw) at (0.8,0) {\textbf{Normal world}\\[2pt] Untrusted OS /\\ hypervisor\\[2pt] \emph{no access to\\ domain memory}\\[2pt] \textbf{Realm world:}\\ RMM unchanged};
+		\node[dom] (d1) at (2.9,0)  {\textbf{Domain $D_1$}\\[2pt] SW: TA + libOS\\ Cores: $c_1$\\ Mem: $G_1$\\ MMIO: sensor\\ IRQ: 33 \\ DMA: --};
+		\node[dom] (d2) at (4.65,0) {\textbf{Domain $D_2$}\\[2pt] SW: TA + libOS\\ Cores: $c_2$\\ Mem: $G_2$\\ MMIO: crypto\\ IRQ: 45 \\ DMA: $s_1$};
+		\node[dom] (d3) at (6.4,0)  {\textbf{Domain $D_3$}\\[2pt] SW: TA + libOS\\ Cores: $c_3$\\ Mem: $G_3$\\ MMIO: NIC\\ IRQ: 52 \\ DMA: $s_2$};
+		\draw[darr] ([yshift=3mm]nw.east) -- ([yshift=3mm]d1.west);
+		\begin{scope}[on background layer]
+			\node[draw, dashed, rounded corners=3pt, fill=green!5, fit=(d1)(d2)(d3), inner sep=2.5pt] (sw) {};
+		\end{scope}
+		\node[anchor=south, yshift=-1pt] at (sw.north) {\emph{Decoupled Secure world: least-privilege, mutually isolated domains}};
 
+		% ---- Hardware enforcement ----
+		\node[draw, rounded corners=2pt, fill=blue!10, align=center, text width=6.9cm, minimum height=0.55cm, inner sep=2pt] (gpc) at (3.6,-1.95)
+			{\textbf{Hardware enforcement:} per-core GPC checks every physical access against the core's active GPT view; the SMMU checks DMA against one system-wide GPT};
+		\foreach \n/\l in {nw/{V_N}, d1/{V_1}, d2/{V_2}, d3/{V_3}} {
+			\draw[arr] ([yshift=-1.5pt]\n.south) -- (\n.south |- gpc.north) node[pos=0.72, right, inner sep=1.5pt] {$\l$};
+		}
 
+		% ---- Root monitor and verifier ----
+		\node[draw, rounded corners=2pt, fill=yellow!22, align=left, text width=4.5cm, inner sep=3pt] (root) at (2.33,-3.7)
+			{\centering\textbf{Root monitor (EL3)}\par\vspace{1pt}
+			\raggedright 1.~\textbf{Build:} manifest $M \rightarrow$ disjoint GPT views $V_i$; configure MMIO, SMMU, GIC\\
+			2.~\textbf{Switch:} install $V_i$ on the core (SMC); invalidate cached GPT info\\
+			3.~\textbf{Measure:} $\mathbf{A}_H$ over $M$, $V_i$, MMIO, SMMU, GIC; $\mathbf{A}_S$ over domain software\par};
+		\draw[arr] (root.north) -- (root.north |- gpc.south) node[midway, left, inner sep=1.5pt] {program};
+		\node[draw, rounded corners=2pt, fill=violet!10, align=center, text width=1.4cm, inner sep=3pt, minimum height=1.5cm] (ver) at (6.5,-3.7)
+			{\textbf{Remote verifier}\\[2pt] checks $\mathbf{A}_{TEE}$ against $M$};
+		\draw[arr] ([yshift=2.5mm]ver.west) -- ([yshift=2.5mm]root.east) node[midway, above, inner sep=1pt] {nonce};
+		\draw[arr] ([yshift=-2.5mm]root.east) -- ([yshift=-2.5mm]ver.west) node[midway, below, inner sep=1pt] {$\mathbf{A}_{TEE}$};
+	\end{tikzpicture}
+	\caption{Decoupled Secure world on ARM CCA. The Root monitor turns a domain manifest $M$ into per-domain GPT views enforced by hardware GPC and measures the realized composition as $\mathbf{A}_H$ for $\mathbf{A}_{TEE}$. Dashed arrow: declared shared window.}
+	\label{fig:cca}
+	\vspace{-10pt}
+\end{wrapfigure}
 
+We will extend this composition model to fixed-silicon platforms without custom or reconfigurable hardware, focusing on the Secure world of ARM CCA~\cite{li2022design}.
+Today's Secure world is one hardware protection domain: the TEE OS or S-EL2 partition manager, trusted applications, secure drivers, and peripherals share the Secure physical address space, are separated only by fully trusted software, and can read all Normal-world memory.
+We will develop a \emph{decoupled Secure world} in which a small Root-world monitor uses the Granule Protection Tables (GPT), which assign each physical granule to a world, and the hardware Granule Protection Check (GPC) to split it into mutually isolated, least-privilege domains, each specified by its cores, memory, MMIO peripherals, DMA masters, interrupts, and explicit channels (Figure~\ref{fig:cca}).
+Because a GPT distinguishes only worlds, the monitor installs a separate GPT view on a domain's cores at each domain switch, invalidating cached GPT information; in this view only the domain's own granules and declared shared windows are accessible, so a compromised TEE OS or partition manager reaches neither other domains nor the Normal world.
+Since the GPC vets physical addresses after translation, the design needs only new Root-monitor firmware on RME-capable processors and leaves the RMM, realm translation tables, and each domain's page tables untouched. It thus complements \byotee's hardware-level construction with a software-defined one on standard ARM silicon, while the domain specification remains architecture-independent.
+The central challenges are (i) exclusively assigning peripherals, interrupts, and DMA masters, which the GPC alone cannot enforce (the SMMU checks DMA against one system-wide GPT and interrupts lie outside the GPT) and which prior CCA work addresses only for user-space applications and Realm VMs~\cite{zhang2023shelter,bertschi2024devlore}, (ii) preserving real-time behavior despite GPT invalidation on every domain switch, and (iii) determining whether a requested domain can be faithfully realized given residual shared state such as caches.
 
-\textbf{Task 1.2: Verifiable Trusted-Domain Establishment.}
-We will investigate how a remote verifier can establish that the trusted domain defined in Task~1.1 has actually been instantiated as intended.
-Rather than attesting only the protected application, we will bind evidence about the trusted software to measurements of the security-relevant execution environment.
-This will allow the verifier to determine whether both the hardware and software components of the realized domain match the expected trust specification.
 
 
 \begin{wrapfigure}{r}{0.48\textwidth}
@@ -78,6 +119,12 @@ This will allow the verifier to determine whether both the hardware and software
 	\vspace{-10pt}
 \end{wrapfigure}
 
+\textbf{Task 1.2: Verifiable Trusted-Domain Establishment.}
+We will investigate how a remote verifier can establish that the trusted domain defined in Task~1.1 has actually been instantiated as intended.
+Rather than attesting only the protected application, we will bind evidence about the trusted software to measurements of the security-relevant execution environment.
+This will allow the verifier to determine whether both the hardware and software components of the realized domain match the expected trust specification.
+
+
 In our preliminary work, \byotee~\cite{armanuzzaman2024building} demonstrates this concept on SoC FPGAs using the \underline{F}PGA \underline{C}onfiguration \underline{M}odule (FCM) and the \underline{H}ardware \underline{Att}estation module (HW-ATT), shown in Figure~\ref{fig:byotee}.
 During trust establishment, the FCM verifies and decrypts the protected FPGA bitstream, configures the enclave hardware, and generates a measurement $\mathbf{A}_H$ representing the instantiated hardware configuration.
 After the enclave is established, the protected application and associated firmware are loaded into enclave memory.
@@ -87,7 +134,9 @@ The verifier's fresh challenge is incorporated into the attestation process to p
 
 We will generalize this hardware/software trust-establishment model to fixed-silicon embedded platforms, where the trusted-domain configuration is not represented by a single measurable bitstream.
 Instead, the hardware component of the trust evidence must capture the collection of security-critical architectural states that realize the domain defined in Task~1.1, such as protection configuration, resource assignments, peripheral permissions, and execution-state controls.
-We will identify the minimal architecture-specific state required to construct an equivalent $\mathbf{A}_H$, securely bind it with the corresponding software evidence $\mathbf{A}_S$, and develop a common $\mathbf{A}_{TEE}$ representation for remote verification.
+On ARM CCA, this state is held by the Root monitor (Figure~\ref{fig:cca}): its granule-ownership records and GPT configuration, MMIO and DMA-master assignments, SMMU and interrupt configuration, and channel table.
+Because CCA defines attestation only for the platform firmware and Realms, not for Secure-world software~\cite{kuhne2024aster}, the monitor will extend a per-domain measurement at creation and on every reconfiguration to produce $\mathbf{A}_H$, and we will investigate how to bind it to the domain's software measurement $\mathbf{A}_S$ and the verifier's challenge under the platform attestation key, with the platform's measured boot of the monitor as the trust anchor.
+We will identify the minimal architecture-specific state required to construct an equivalent $\mathbf{A}_H$ across the FPGA and CCA realizations, securely bind it with the corresponding software evidence $\mathbf{A}_S$, and develop a common $\mathbf{A}_{TEE}$ representation for remote verification.
 The central challenge is to ensure that evidence generated from different architectural mechanisms conveys equivalent trust semantics, allowing the verifier to determine whether the intended hardware/software domain was established across heterogeneous embedded platforms.
 
 
