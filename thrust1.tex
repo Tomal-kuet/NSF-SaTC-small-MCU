@@ -53,6 +53,13 @@ The software TCB is similarly minimized by including only the runtime support, h
 
 
 
+
+
+In addition to constructing the enclave, \byotee introduces two trusted hardware components for establishing the enclave configuration to a remote verifier: the FPGA Configuration Module (\textbf{FCM}) and the hardware attestation module (\textbf{HW-ATT}).
+The FCM securely configures and measures the FPGA hardware realization of the trusted enclave, while HW-ATT measures the enclave software and combines the software and hardware measurements into authenticated evidence for remote verification.
+Task~1.2 builds on these mechanisms to investigate verifiable trusted-domain establishment across broader embedded architectures.
+
+
 \begin{wrapfigure}{r}{0.48\textwidth}
 	\centering
 	\vspace{-8pt}
@@ -97,11 +104,6 @@ The software TCB is similarly minimized by including only the runtime support, h
 	\label{fig:cca}
 	\vspace{-10pt}
 \end{wrapfigure}
-
-
-In addition to constructing the enclave, \byotee introduces two trusted hardware components for establishing the enclave configuration to a remote verifier: the FPGA Configuration Module (\textbf{FCM}) and the hardware attestation module (\textbf{HW-ATT}).
-The FCM securely configures and measures the FPGA hardware realization of the trusted enclave, while HW-ATT measures the enclave software and combines the software and hardware measurements into authenticated evidence for remote verification.
-Task~1.2 builds on these mechanisms to investigate verifiable trusted-domain establishment across broader embedded architectures.
 
 We will extend this composition model to fixed-silicon platforms without custom or reconfigurable hardware, focusing on the Secure world of ARM CCA~\cite{li2022design}.
 Today's Secure world is one hardware protection domain: the TEE OS or S-EL2 partition manager, trusted applications, secure drivers, and peripherals share the Secure physical address space, are separated only by fully trusted software, and can read all Normal-world memory.
