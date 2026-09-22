@@ -2,7 +2,15 @@
 % ==========================================================
 \section{Evaluation Plan}
 % ==========================================================
-\arman{Sectoins starting from here should be about 2 pages}
+
+\textbf{Evaluation and Industry Collaboration.}
+The research outcomes will be evaluated in terms of security, effectiveness, performance, and cost. \arman{Placeholder: we will evaluate and integrate the proposed algorithms and systems with an industry collaborator's embedded products. A collaboration letter is attached: Dr.~[Name], [Title], [Company].}
+
+\textbf{Implementation Plan.}
+We will implement the proposed algorithms, mechanisms, and systems on representative hardware platforms for each thrust. For Thrust~1, the decoupled Secure-world monitor and trusted-domain composition will be implemented on the ARM Fixed Virtual Platform (FVP) with Armv9.2-A RME support; as of this proposal, no commercially available development board exposes RME, so FVP is the only platform on which the ARM~CCA-based design can currently be evaluated, and we will migrate to RME-capable silicon (e.g., automotive-class platforms built on Cortex-A720AE or Neoverse~V3AE) should it become available during the project period. For Thrust~2, runtime attestation will be implemented on the ARM Versatile Express V2M-MPS3 board (Cortex-M85), consistent with our preliminary \enola results. For Thrust~3, compartmentalization and recovery will be implemented and evaluated on both the V2M-MPS3 board and the ARM Evaluation Kit for the RA8M1 MCU (EK-RA8M1, Cortex-M85). The proposed program-analysis and instrumentation algorithms will be implemented as LLVM~\cite{lattner2004llvm} compiler passes, and the proposed binary and data-flow analyses will be built on top of Ghidra~\cite{ghidra} and angr~\cite{shoshitaishvili2016sok}.
+
+\textbf{Evaluation Methodology.}
+Security and effectiveness will be assessed through formal and informal analysis and by measuring the effectiveness of mitigating known attacks against representative embedded software stacks, including FreeRTOS~\cite{freertos}, Zephyr~\cite{Zephyr}, and Mbed~OS~\cite{MbedOS} for Thrusts~2 and~3, and ARM's Trusted Firmware-A monitor together with its Realm Management Monitor reference implementation, TF-RMM~\cite{TFRMM}, for Thrust~1. Performance will be quantified through theoretical analysis and runtime-overhead measurement on established embedded benchmarks and datasets, including BEEBS~\cite{pallister2013beebs} and BenchIoT~\cite{almakhdhub2019benchiot}, and compared against the prior work discussed in each thrust's Related Work. Cost will be measured by the memory, storage, and trusted-computing-base overhead introduced on each platform.
 
 % ==========================================================
 \section{Broader Impacts}
