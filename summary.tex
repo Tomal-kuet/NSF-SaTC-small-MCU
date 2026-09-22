@@ -1,0 +1,40 @@
+% Standalone build wrapper for summary.tex.
+% Produces summary.pdf directly via pdflatex (never via Preview/Quartz export,
+% which corrupts PDF object dictionaries and gets rejected by research.gov).
+% Build with: make summary   (see Makefile)
+%
+% NSF Project Summary rules (PAPPG): 1 page, no citations/references, written
+% for a general audience, must contain separately labeled Overview,
+% Intellectual Merit, and Broader Impacts statements. RES/SEED proposals must
+% also include a prioritized list of 1-6 keywords in the Overview, the first
+% drawn from the SaTC 2.0 keyword list.
+\documentclass[11pt,onecolumn]{article}
+\usepackage[letterpaper,margin=1in]{geometry}
+\usepackage{times}
+\usepackage[colorlinks=true,linkcolor=blue,citecolor=blue,urlcolor=blue]{hyperref}
+\usepackage{xspace}
+\linespread{1.0}
+\setlength{\parindent}{1.5em}
+\setlength{\parskip}{0pt}
+\pagestyle{empty}
+\newcommand{\sys}{\textsc{Vest}\xspace}
+
+\begin{document}
+
+\section*{Project Summary}
+
+\textbf{Overview.}
+Embedded systems, spanning resource-constrained microcontrollers and application-class processors, form the computing substrate of industrial automation, transportation, healthcare, and smart infrastructure. Two ARM processor classes underlie the large majority of this landscape: Cortex-M microcontrollers, which run bare-metal or RTOS firmware without a memory management unit, and Cortex-A application processors, which provide a memory management unit and increasingly appear in automotive and edge-AI platforms; reconfigurable FPGA systems-on-chip further combine both classes with customizable hardware. This project targets exactly these architectures, the representative substrate of today's embedded and cyber-physical systems. Because these devices are field-deployed, long-lived, and rarely inspected, a single memory-corruption or misconfiguration flaw can compromise physical processes and go unnoticed for years, as recent incidents affecting automotive infotainment systems, industrial water utilities, and widely used embedded network stacks illustrate. Existing embedded trust mechanisms establish a device's trustworthiness only at a single point in time: a trusted execution environment's hardware/software composition is rarely explicit or remotely verifiable, runtime attestation evidence grows with execution duration and cannot scale to long-running, interrupt-driven, and multitasking workloads, and a single compromised software component can undermine an entire device with no mechanism to localize, contain, and selectively recover from the violation. This project, \textbf{\sys}: \textit{\underline{V}erifiable Trust \underline{E}stablishment for Embedded \underline{S}ys\underline{t}ems}, develops a continuous trust lifecycle spanning three research thrusts: (1) application-specific trusted execution domains, constructed on reconfigurable FPGA hardware and, through firmware alone, on ARM's Confidential Compute Architecture, whose hardware/software composition is remotely verifiable; (2) scalable runtime trust attestation that generates compact, protected evidence for bare-metal and RTOS-based execution without evidence growing with execution duration; and (3) evidence-guided compartmentalization that enforces real-time- and data-flow-aware isolation and localizes, contains, and selectively recovers from a compromised component.
+
+\vspace{0.4em}
+\textbf{Intellectual Merit.}
+This project advances the science of establishing, verifying, and preserving trust in embedded systems throughout their lifecycle, rather than at a single point in time. It contributes new abstractions and hardware/software co-design mechanisms for constructing application-specific trusted execution domains whose composition is remotely verifiable on both reconfigurable and fixed-silicon platforms; compact, hardware-assisted runtime evidence representations whose size is governed by program structure rather than execution duration, extending control-flow attestation to interrupt-driven and multitasking embedded execution; and compartmentalization techniques that jointly reason about real-time constraints, data-flow integrity, and evidence-guided containment and recovery. Preliminary results from the PI's prior work on FPGA-based trusted execution and control-flow attestation demonstrate the feasibility of the proposed directions and substantially reduce the trusted computing base relative to conventional approaches.
+
+\vspace{0.4em}
+\textbf{Broader Impacts.}
+This project directly targets the classes of embedded devices responsible for real-world security incidents in the automotive, industrial control, healthcare, and critical infrastructure sectors, and its verifiable-trust mechanisms provide candidate building blocks for federal cybersecurity guidance that calls for built-in, continuously verifiable device trustworthiness. It will broaden participation of Hispanic and other underrepresented students in embedded and hardware security through research training at UTEP, an R1 research university and Hispanic-Serving Institution, and through the PI's ongoing mentorship of a student team in the MITRE Embedded Capture-the-Flag competition. Project outcomes will be integrated into the PI's undergraduate and graduate systems-security curriculum, and all software artifacts, including prior open-sourced prototypes and new tools developed in this project, will be publicly released to support reproducibility and adoption by the broader research and practitioner community.
+
+\vspace{0.4em}
+\textbf{Keywords:} hardware security; embedded systems; hardware/software co-design; remote execution verification; software least privilege.
+
+\end{document}
