@@ -1,301 +1,143 @@
+% Standalone build wrapper for data-management-plan.tex.
+% Produces data-management-plan.pdf directly via pdflatex (never via Preview/Quartz
+% export, which corrupts PDF object dictionaries and gets rejected by research.gov).
+% Build with: make data-management-plan
+%
+% NSF 25-515 (SaTC 2.0) Data Management and Sharing Plan rules: Supplementary
+% Document, no more than two pages, must be substantive and project-specific.
+% Beyond standard PAPPG content, SaTC 2.0 asks proposers to address: (1) ethics
+% of data collection and harms that could arise from sensitive data; (2) methods
+% for controlled-access data sharing; (3) security techniques preventing
+% unauthorized dissemination; and (4) whether data is LLM/synthetic or produced
+% by real experiments, tagged for provenance, accountability, and reproducibility.
 \documentclass[11pt,onecolumn]{article}
-%\usepackage[hmargin=1in,vmargin=1in]{geometry}
+\usepackage[letterpaper,margin=1in]{geometry}
 \usepackage{times}
-%\usepackage[utf8]{inputenc}
-\usepackage[dvipsnames, table]{xcolor}
-\usepackage{threeparttable}
-\usepackage{color}
-\usepackage{url}
-\usepackage{wrapfig}
-\usepackage{subfig}
-\usepackage{graphicx}
-\usepackage{tikz}
-\usetikzlibrary{arrows.meta}
-\usepackage{multirow}
-\usepackage{pgfgantt}
-\usepackage{comment}
-\usepackage{amssymb}
-\graphicspath{ {./figures/} }
-\usepackage{enumitem}
-\usepackage[para]{footmisc}
-\usepackage[most]{tcolorbox}
-\usepackage[compact]{titlesec}
-\titlespacing{\section}{1pt}{3pt}{3pt}
-\titlespacing{\subsection}{1pt}{4pt}{3pt}
-\titlespacing{\subsubsection}{1pt}{3pt}{3pt}
-\setcounter{secnumdepth}{4}
-\renewcommand{\baselinestretch}{0.9}
-
-\usepackage[sort&compress]{natbib}
-\setitemize{noitemsep,topsep=0pt,parsep=0pt,partopsep=0pt}
-
-\usepackage{array}
-%\usepackage[bottom]{footmisc}
-\usepackage{setspace}
-\newcolumntype{P}[1]{>{\centering\arraybackslash}p{#1}}
-% See this file for a set of pre-defined journal abbreviations
-
-%\newcommand\notsotiny{\@setfontsize\notsotiny{6}{7}}
-\newcommand{\ignore}[1]{}
-\newcommand{\sysnamecfi}{{\scshape Sherloc}\xspace}
-
-\newcommand{\degrees}{$\!\!$\char23$\!$}
-\renewcommand{\refname}{\centerline{References cited}}
-
-% This handles hanging indents for publications
-\def\rrr#1\\{\par
-\medskip\hbox{\vbox{\parindent=2em\hsize=6.12in
-\hangindent=4em\hangafter=1#1}}}
-
-\hyphenation{net-works}
-\hyphenation{non-preemptive}
-\hyphenation{sche-duling}
-
-% Float separation. The LaTeX defaults (textfloatsep 20pt, floatsep 12pt,
-% intextsep 12pt) read as roughly a blank line and a half at 11pt, which looks
-% loose beside tables and costs real space in a page-limited document. These are
-% tightened but not collapsed -- a float still reads as separate from the text.
-\setlength{\textfloatsep}{11pt plus 2pt minus 3pt}
-\setlength{\floatsep}{9pt plus 2pt minus 2pt}
-\setlength{\intextsep}{9pt plus 2pt minus 2pt}
-\setlength{\abovecaptionskip}{5pt}
-\setlength{\belowcaptionskip}{2pt}
-
-\newcommand{\head}[1]{\vspace{0.4em}\noindent{\bf #1}}
-\newcommand{\npara}[1]{\noindent{\bf #1}}
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% CVE CORPUS FIGURES -- SINGLE SOURCE OF TRUTH.
-% Every number below comes from CVEs-filled-v2.xlsx. Change them HERE ONLY;
-% every use site follows. Regenerate with scripts/fetch_cves.py.
-%
-% SCOPE: open-source RTOSes that target microcontroller-class hardware, ship
-% their OWN network stack rather than linking an external one, and whose
-% advisories identify the defective component.
-%   IN  : Zephyr (195), Contiki-NG (53), Eclipse ThreadX (44), RIOT-OS (41),
-%         FreeRTOS (38), RT-Thread (22), Mbed OS (17), NuttX (12)
-%         -- eight RTOSes, 422 unique CVEs, 2017-2026.  CVE-2023-24823 is
-%         duplicated in DB-all rows 128-129 and counted once.  Eclipse ThreadX folds in the
-%         rows still labeled Azure RTOS in DB-all (28 + 16).
-%   OUT : general-purpose TLS libraries (Mbed TLS, wolfSSL) -- far more of
-%         their deployments are servers than microcontrollers.
-%   OUT : ThreadX middleware (USBX / FileX / GUIX) -- separate products that
-%         are neither the kernel nor the network stack. NetX Duo IS included.
-%   OUT : RT-Thread (22) and NuttX (12) -- their records are dominated by
-%         third-party submissions whose descriptions do not locate the defect
-%         to a component, which the per-CVE analysis in Aim 1 requires.
-%   OUT : CMSIS RTOS2 (1 CVE), and 8 rows whose defect is outside the network
-%         subsystem entirely (Antelope DB, GNSS).
-%
-% NOTE: Mbed OS reached END OF LIFE in July 2026 (ARM archived the platform).
-% It is retained as a maintenance-ended case and that status is stated in text.
-%
-% CVSS is NVD v3.x throughout -- one scorer, one version. Vendor-supplied
-% scores were replaced (76 of 345 differed) and preserved in a backup column.
-% 2026 is PARTIAL: collected August 2026.
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\newcommand{\cveYears}{2017--2026}    % 2026 partial
-\newcommand{\cveTotal}{406}           % RTOS CVEs in the corpus
-\newcommand{\nRtos}{eight}              % number of RTOSes studied
-\newcommand{\nNetCVE}{292}            % network-component CVEs
-\newcommand{\pctNet}{71.9\%}            % HEADLINE: 296/422 = 70.1%
-\newcommand{\pctCritHigh}{66.7\%}       % critical or high, all CVEs: 279/422 = 66.1%
-\newcommand{\pctNetCritHigh}{67.8\%}  % critical or high among NETWORK CVEs: 202/296
-% Where the damage lands, among the \nNetCVE{} network-component CVEs:
-\newcommand{\nProtoImpl}{264}         % confined to protocol logic
-\newcommand{\nSysState}{23}           % ALSO corrupt RTOS system state
-\newcommand{\nSharedUtil}{5}          % defect in a shared, non-network module
-\newcommand{\pctProtoImpl}{90.4\%}   % 268/296
-\newcommand{\pctSysState}{7.9\%}     % 23/296
-\newcommand{\pctSharedUtil}{1.7\%}   % 5/296
-% Deprecated -- the old Cerdeira validation/functional/extrinsic split no
-% longer applies to this corpus. Kept so stale references still compile.
-\newcommand{\cveSwTotal}{\cveTotal}
-\newcommand{\pctComm}{\pctNet}
-
-\usepackage{hyperref}
-\hypersetup{
-  colorlinks=true,
-  breaklinks=true,
-  citecolor=black,
-  linkcolor=black,
-  urlcolor=black,
-  citebordercolor={1 1 1},
-  linkbordercolor={1 1 1},
-}
-
-%%%%%%%%%% verbatim related
-\usepackage{fancyvrb}
-\fvset{framesep=2mm,fontsize=\scriptsize,framerule=.1mm,numbersep=1mm,commandchars=\\\{\}}
-\usepackage{listings}
-
-\renewcommand{\url}[1]{#1}
-
-\newcommand*\numcircledmod[1]{\raisebox{.5pt}{\textcircled{\raisebox{-.9pt} {#1}}}}
-
-
-\definecolor{internationalorange}{rgb}{1.0, 0.31, 0.0}
-
-\newif\ifrev
-%%%%%%%%%%%%%%%%%%
-% COMMENT OUT NEXT LINE TO HIDE COMMENTS
-\revtrue
-%%%%%%%%%%%%%%%%%%
-\ifrev
-  % \newcommand{\gedare}[1]{\textcolor{internationalorange}{\textsc{Gedare:} #1}}
-  \newcommand{\tomal}[1]{{\color{ForestGreen} [Tomal: #1]}}
-  \newcommand{\xitan}[1]{{\color{Dandelion} [Xi: #1]}}
-  % \newcommand{\habeeb}[1]{{\color{RoyalPurple} [Habeeb: #1]}}
-  \newcommand{\red}[1]{\textcolor{red}{#1}}
-  \newcommand{\blue}[1]{\textcolor{blue}{#1}}
-  \newcommand{\todo}[1]{\textcolor{red}{\textbf{Anyone todo}: #1}}
-  % \newcommand{\gtodo}[1]{\textcolor{internationalorange}{\textbf{Gedare todo:} #1}}
-  \newcommand{\ttodo}[1]{\textcolor{ForestGreen}{\textbf{Tomal todo:} #1}}
-  \newcommand{\xtodo}[1]{\textcolor{Dandelion}{\textbf{Xi todo:} #1}}
-  % \newcommand{\htodo}[1]{\textcolor{RoyalPurple}{\textbf{Habeeb todo:} #1}}
-\else
-  % \newcommand{\gedare}[1]{}
-  \newcommand{\tomal}[1]{}
-  \newcommand{\xitan}[1]{}
-  % \newcommand{\habeeb}[1]{}
-  \newcommand{\red}[1]{}
-  \newcommand{\blue}[1]{}
-  \newcommand{\todo}[1]{}
-  % \newcommand{\gtodo}[1]{}
-  \newcommand{\ttodo}[1]{}
-  \newcommand{\xtodo}[1]{}
-  % \newcommand{\htodo}[1]{}
-\fi
-
-\newcommand{\ls}[1]
-   {\dimen0=\fontdimen6\the\font
-    \lineskip=#1\dimen0
-    \advance\lineskip.5\fontdimen5\the\font
-    \advance\lineskip-\dimen0
-    \lineskiplimit=.9\lineskip
-    \baselineskip=\lineskip
-    \advance\baselineskip\dimen0
-    \normallineskip\lineskip
-    \normallineskiplimit\lineskiplimit
-    \normalbaselineskip\baselineskip
-    \ignorespaces
-   }
-
-
-\newtcolorbox{Box1}[2][]{
-                lower separated=false,
-                colback=gray!10,
-colframe=black,fonttitle=\bfseries,
-colbacktitle=black,
-coltitle=white,
-enhanced,
-attach boxed title to top left={yshift=-0.1in,xshift=0.15in},
-                 boxed title style={boxrule=0pt,colframe=white,},
-title=#2,#1}
-
-\begin{document}
+\usepackage[colorlinks=true,linkcolor=blue,citecolor=blue,urlcolor=blue]{hyperref}
+\usepackage{xcolor}
+\usepackage{soul}
+\linespread{1.0}
+\setlength{\parindent}{0em}
+\setlength{\parskip}{0.4em}
 \pagestyle{empty}
 
+\newcommand{\arman}[1]{%
+	\begingroup
+	\definecolor{hlcolor}{RGB}{135, 216, 230}\sethlcolor{hlcolor}%
+	\textcolor{black}{\hl{\textit{\textbf{Arman:} #1}}}%
+	\endgroup
+}
 
-\section*{\large Data Management and Sharing Plan}
+\newcommand{\head}[1]{\noindent{\bf #1}}
 
-\vspace{4pt}
+\begin{document}
 
-\noindent Our data management and sharing plan ensures that project data, software, and educational
-materials are collected responsibly, documented clearly, and shared openly, while managing the
-one real safety concern this project's outputs raise: working exploit code is dual-use until the
-vulnerability it targets is patched.
-Everything else --- the corpus, the benchmark once disclosed, the enforcement and attestation
-prototypes, and the course material --- is released without restriction, since the goal stated
-throughout the proposal is a benchmark and toolchain any RTOS maintainer can run independently
-of us.
+\section*{Data Management and Sharing Plan}
+
+This plan describes how the data, software, and educational materials produced by
+VEST: Verifiable Trust Establishment on Embedded Systems will be generated,
+documented, shared, and preserved, consistent with NSF's public access and
+data-sharing policy.
 
 \head{Data and Software.}
-The project produces three kinds of output.
-\emph{Research data}: the exploitation-requirement dataset, a per-CVE record (category~(i)--(iv)
-label, risky component and input, recurring code shape, critical variables) extracted from the
-\nNetCVE{} network-component CVEs disclosed against \nRtos{} RTOSes~\cite{tan24sok}; the
-cross-stack pattern-confirmation records from Task~1.1; the benchmark of reproduced exploits
-(build configuration, triggering input sequence, oracle predicate, expected verdict) on both
-physical boards and scoped rehosted targets from Task~1.3; and the security and cost measurements
-from the RT~2/RT~3 evaluation (equivalent-target-set counts, throughput, latency, flash/RAM,
-worst-case execution time, attestation report size, verifier latency).
-Every record in this dataset is derived from an already-public CVE advisory, so none of it is
-sensitive on its own.
-The one exception is a confirmed cross-stack \emph{variant} of a known pattern before its
-coordinated disclosure completes: that exploit is held privately, shared only with the affected
-maintainer, and joins the public benchmark once a patch ships, exactly as the project description's
-disclosure policy commits.
-\emph{Software}: the LLVM instrumentation passes for protocol-state-aware control-flow and
-critical-data-flow integrity (RT~2); the attestation compiler, analyzer and verifier extending the
-open-source ENOLA toolchain~\cite{armanuzzaman2026enola} (RT~3); the cross-stack query tooling and
-scoped-rehosting harness (RT~1); and the benchmark harness itself.
-\emph{Educational materials}: the capture-the-flag challenges and hands-on lab modules built on the
-benchmark, and course material for the new non-Linux embedded-systems-security course at UCCS and
-UTEP.
+The project produces four kinds of output, one per research thrust plus a shared
+evaluation layer.
+\emph{Thrust 1 (trusted-domain composition and attestation):} FPGA enclave
+configuration artifacts and measurement logs from the BYOTee toolchain; the
+Root-monitor firmware and domain-manifest tooling developed for ARM's Confidential
+Compute Architecture on the Fixed Virtual Platform; and the resulting hardware and
+software measurement records used to evaluate composition verifiability and
+trusted-computing-base size.
+\emph{Thrust 2 (runtime trust attestation):} the LLVM compiler passes and runtime
+instrumentation extending the ENOLA control-flow attestation engine to
+interrupt-driven and multitasking execution, and the resulting evidence-size,
+verifier-latency, and overhead measurements collected on the ARM Versatile
+Express V2M-MPS3 board.
+\emph{Thrust 3 (compartmentalization and recovery):} the compiler-driven
+partitioning tool, transition-monitor implementation, and data-flow tagging
+runtime, and the resulting MPU-switching overhead, violation-detection-latency,
+and containment/recovery-time measurements collected on the V2M-MPS3 and
+RA8M1 (EK-RA8M1) boards.
+\emph{Shared evaluation data:} benchmark results and comparisons against
+established datasets (BEEBS, BenchIoT) and against the prior work discussed in
+each thrust's Related Work.
+\emph{Educational materials:} lab modules and challenge material developed for
+the PI's undergraduate and graduate systems-security course and for the MITRE
+Embedded Capture-the-Flag team.
+All research data in this project is generated directly by hardware and software
+experiments described in the Evaluation Plan; none of it is synthetic or
+produced by a large language model, and every record is tagged with the
+generating platform (FVP, V2M-MPS3, or EK-RA8M1), build configuration, and
+software commit, so its provenance is traceable without additional
+documentation.
 
 \head{Standards and Formats.}
-Source and instrumentation are C and LLVM IR, with Python for the analysis and query tooling.
-Dataset records use CSV/JSON against a documented labeling schema, published alongside the data so
-a reader does not have to reconstruct what a category or a critical-variable field means.
-Benchmark cases carry pinned build manifests and container or emulator images so a rehosted target
-reconstructs exactly, and the packet inputs that trigger each case are stored as PCAP.
-Hardware measurements (trace captures, timing logs) are stored as CSV or the instrument's native
-binary format alongside a script that parses it.
-Documentation, including the Task~1.1 extraction decision procedure and inter-rater agreement
-method, is Markdown and PDF.
-Every record and every benchmark case carries provenance metadata: source CVE identifier, RTOS and
-version, build configuration, and disclosure status, so reuse does not require guessing context.
+Source code and compiler passes are written in C and LLVM IR; firmware and
+monitor code targets the TF-A/TF-RMM and Cortex-M toolchains used in the
+Evaluation Plan. Measurement data (evidence size, latency, overhead, and
+trusted-computing-base size) is stored as CSV with a documented schema
+describing each field and the experiment that produced it. Configuration
+artifacts (FVP platform configs, board BSPs, MPU/GPT manifests) are stored as
+plain text or JSON alongside the code that consumes them, so an experiment can
+be reconstructed without guessing undocumented state. Documentation is
+Markdown and PDF.
 
-\head{Access and Sharing.}
-GitHub is the working repository for code, data and documentation; tagged releases are mirrored to
-Zenodo with DOIs for long-term citability, and publications are deposited in NSF-PAR.
-Material under an active coordinated-disclosure embargo is held privately until a patch ships, at
-which point it is released with the rest of the benchmark; this is a temporary delay, not an
-access restriction, and nothing in this project is withheld from any country or class of user once
-disclosure completes.
-If a specific artifact remains sensitive even after disclosure, that case is reviewed by the PIs in
-consultation with the sponsored-research offices at UCCS and UTEP before release.
+\head{Access, Sharing, and Provenance.}
+All data, software, and educational materials produced by this project are
+released without access restriction: none of VEST's outputs are attack
+tooling, personally identifiable, or export-controlled, so nothing in this
+project requires controlled or restricted-access sharing.
+GitHub is the working repository for code, data, and documentation; tagged
+releases are mirrored to Zenodo with DOIs for long-term citability, and
+publications are deposited through NSF's public access repository.
+\arman{Confirm the GitHub organization/repository name(s) and Zenodo community
+link before submission.}
+The one circumstance under which release would be delayed is if evaluation on
+a third-party reference implementation (for example, ARM's Trusted Firmware-A
+or TF-RMM) incidentally surfaces a genuine vulnerability; in that case the
+finding is held privately and disclosed to the maintainer under standard
+coordinated-disclosure practice before publication, while the rest of the
+project's outputs are released on schedule.
+Software repositories and datasets are protected against unauthorized
+modification using GitHub's access controls and branch protection, with
+releases signed and tagged so a downstream user can verify provenance.
 
 \head{Reuse and Redistribution.}
-Software is released under a permissive license (MIT or BSD) and data and educational material
-under Creative Commons, so the community can reuse, redistribute and build derivatives with
-attribution.
-Where a benchmark case carries modified upstream RTOS source, redistribution respects that
-project's own license; we do not relicense third-party code, only the instrumentation, patches and
-analysis artifacts layered on it.
-The one thing never distributed is working exploit input for a vulnerability that is not yet
-patched, for the reason stated above.
-Version control and a public issue tracker on GitHub support responsible reuse and let other
-groups extend the benchmark independently of us, which is the stated goal of releasing it.
+Software is released under a permissive open-source license (MIT or BSD), and
+data and educational material under a Creative Commons license, so other
+researchers, educators, and practitioners can reuse, redistribute, and build
+on them with attribution.
+Where project code extends third-party open-source components, such as ARM's
+Trusted Firmware-A and TF-RMM reference implementations or the LLVM toolchain,
+redistribution respects that project's own license; only the instrumentation,
+monitor, and analysis code developed in this project is newly licensed.
+Version control and a public issue tracker on GitHub support responsible reuse
+and let other groups extend or reproduce the project's results independently
+of the PI's lab, consistent with the reproducibility goals stated throughout
+the proposal.
 
 \head{Archiving and Preservation.}
-Data, code and documentation are retained for at least three years beyond the end of the award on
-secured, backed-up servers at UCCS and UTEP under institutional IT policy, and mirrored
-indefinitely on GitHub and Zenodo so persistence does not depend on either institution's retention
-window alone.
-Publications remain accessible through publisher repositories and NSF-PAR.
+Data, code, and documentation are retained for at least three years beyond the
+end of the award on backed-up storage at UTEP under institutional IT policy,
+and mirrored indefinitely on GitHub and Zenodo so long-term access does not
+depend on the university's retention window alone. Publications remain
+accessible through the publisher's repository and NSF's public access
+repository.
 
-\head{Ethics and Responsible Disclosure.}
-The project involves no human subjects and no personally identifiable information: every record is
-a CVE advisory, source code, or a hardware or network measurement taken from equipment the team
-owns, so IRB review is not required.
-The applicable risk is dual-use, not privacy, and it is handled the same way throughout the
-proposal: exploitation is performed only on hardware the team owns or in emulation, no third-party
-or production device is targeted, and every confirmed variant enters coordinated disclosure with
-the affected project before publication or public release.
+\head{Ethics and Human Subjects.}
+This project involves no human subjects and no personally identifiable
+information: every dataset is a hardware or software measurement collected
+from equipment the PI's lab owns or controls, or from public reference
+implementations evaluated in emulation, so IRB review is not required. Student
+researchers who contribute to the project do so as project personnel and,
+where appropriate, co-authors, not as human-subject participants.
 
 \head{Prior Experience.}
-Both PIs have a record of releasing research artifacts responsibly.
-PI~Tan has open-sourced the CVE systematization this project extends~\cite{tan24sok} and prior
-Cortex-M control-flow defense prototypes~\cite{ma2023dac,tan2023sherloc}.
-Co-PI~Armanuzzaman has open-sourced \textit{BYOTee}, the FPGA-based trusted-execution framework
-RT~1 builds on, and ENOLA~\cite{armanuzzaman2026enola}, the control-flow
-attestation system RT~3 builds on, with both implementations and evaluations publicly released.
-Both PIs' capture-the-flag and course material has likewise been shared with the community they
-teach and compete in.
-
-\bibliographystyle{abbrv}
-\bibliography{bib/refs, bib/bibdata, bib/xi, bib/tomal}
+The PI has a record of releasing research artifacts responsibly: both BYOTee,
+the FPGA-based trusted-execution framework Thrust~1 builds on, and ENOLA, the
+control-flow attestation system Thrust~2 builds on, have been open-sourced
+with their implementations and evaluations publicly released. The PI's
+capture-the-flag and course material has likewise been shared with the
+community he teaches and competes in.
 
 \end{document}
