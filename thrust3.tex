@@ -86,11 +86,9 @@ Because verifying arbitrary nesting depth is a substantially harder target than 
 Finally, we will treat DMA transfer requests as cross-domain calls rather than unilateral peripheral writes: a \textit{trusted DMA broker} validates a compartment's requested source, destination, and length against that compartment's own memory boundaries before committing the descriptor to hardware (Figure~\ref{fig:t31}), protecting the CPU-writable descriptor fields ordinary DMA validation leaves exposed.
 Because validating every transfer individually would reintroduce the per-transfer cost DMA exists to avoid, we will amortize this cost across repeated, same-shaped transfers by caching a transfer's shape and cheaply re-authorizing subsequent transfers that match it.
 
-\textbf{Task 3.2: Ambiguity-Guided Data-Flow Integrity.}
-
 \begin{wrapfigure}{r}{0.48\textwidth}
 	\centering
-	%\vspace{-8pt}
+	\vspace{-8pt}
 	\begin{tikzpicture}[
 			font=\tiny,
 			box/.style={draw, rounded corners, align=center, minimum height=0.7cm, inner sep=2.5pt, fill=white},
@@ -108,18 +106,28 @@ Because validating every transfer individually would reintroduce the per-transfe
 		\draw[arr] (amb) -- node[above,sloped,pos=0.55]{no} (pa);
 		\draw[arr] (pa) -- (check);
 	\end{tikzpicture}
-	\caption{\textit{Task 3.2}: an unambiguous data dependency is enforced for free via a static, directional MPU region; an ambiguous one falls back to a PA-tagged write checked at the read site or via the evidence stream.}
+	\caption{\textit{Task 3.2}: unambiguous dependencies get a static, directional MPU region for free; ambiguous ones fall back to a PA-tagged write, checked at read or via the evidence stream.}
 	\label{fig:t32}
 	\vspace{-10pt}
 \end{wrapfigure}
+\textbf{Task 3.2: Ambiguity-Guided Data-Flow Integrity.}
+Task~3.2 targets the data that legitimately crosses a compartment boundary, authenticating which compartment may write a given shared location rather than leaving all shared state uniformly accessible to every compartment with region access.
+The central challenge is enforcing this on Cortex-M, which has no hardware memory-tagging support, without paying full-instrumentation cost for locations the compiler can already resolve statically.
 
-Building on the same ambiguity-driven philosophy we use for control-flow evidence in Task~2.1, we will treat each data dependency Task~3.1's partitioner exposes across a compartment boundary as either statically resolvable or ambiguous, and enforce it accordingly rather than applying one uniform mechanism to all shared state. As illustrated in Figure~\ref{fig:t32}, where the dependence analysis can prove a shared location has a single reachable writer for a given reader, we enforce that relationship for free using directional (read-only / read-write) MPU permissions, automating -- and pushing below task granularity -- a distinction that production RTOS memory-protection APIs such as FreeRTOS-MPU and Zephyr's memory domains already expose architecturally but require a developer to configure manually, one task at a time.
+We address this challenge by letting Task~3.1's dependence graph decide, for each shared location, whether it can be protected with a static MPU region or needs a runtime check.
+Where the graph proves a single compartment is the only possible writer, we enforce that with a directional MPU region: one compartment gets read-write access, every other compartment gets read-only (or no) access, and the hardware enforces this boundary at no added cost.
+Where the graph cannot narrow the writer down to one compartment, due to pointer aliasing or interrupt-interleaved updates (Figure~\ref{fig:t32}), we fall back to a lightweight signature built on ARM's PA hardware: each write computes an authenticator over the writer's identity, the write location, and a monotonically increasing epoch, using the \texttt{PACGA} instruction and the same PA keys Thrust~2 uses for control-flow evidence.
+A read recomputes this authenticator and compares it against the small set of candidate-writer keys the dependence graph could not rule out; a compromised compartment outside that set cannot forge a matching tag, and the epoch prevents replaying an old one.
+This bounds the confused-deputy gap by constraining which compartment may write a given ambiguous location, while spending its cost only where ambiguity cannot be statically resolved, so overhead scales with program ambiguity rather than with the number of shared variables or the volume of execution.
+\begin{comment}
+% --- Original Task 3.2 text (pre-rewrite), kept for reference. ---
+Building on the same ambiguity-driven philosophy we use for control-flow evidence in Task~2.1, we will treat each data dependency Task~3.1's partitioner exposes across a compartment boundary as either statically resolvable or ambiguous, and enforce it accordingly rather than applying one uniform mechanism to all shared state.
+As illustrated in Figure~\ref{fig:t32}, where the dependence analysis can prove a shared location has a single reachable writer for a given reader, we enforce that relationship for free using directional (read-only / read-write) MPU permissions, automating -- and pushing below task granularity -- a distinction that production RTOS memory-protection APIs such as FreeRTOS-MPU and Zephyr's memory domains already expose architecturally but require a developer to configure manually, one task at a time.
 
 Where the analysis cannot statically bound the reaching writer -- due to pointer aliasing or interrupt-interleaved updates, the same conditions that force ACES's own over-approximation~\cite{clements2018aces} -- we fall back to a dynamic mechanism only for that specific dependency, and only among the small candidate set of compartments the analysis could not rule out, rather than trusting any code with region access, as ACES, EC, and MINION do today. Because Cortex-M has no hardware memory-tagging support, each such location is paired with a compact shadow-metadata slot: on write, the compartment computes an authenticator over its own compartment identity, the specific def-site, and the current transition epoch using the \texttt{PACGA} generic-authentication instruction and the same Pointer Authentication key infrastructure Thrust~2 already uses for control-flow measurement, and stores it in that slot. A read -- or, to avoid per-access overhead, the evidence report -- recomputes and compares the authenticator against each key in the candidate-writer set; because producing a valid tag requires the corresponding compartment's key, which untrusted code cannot access, a compromised compartment that can overwrite the metadata slot but does not hold that key still cannot forge a tag that verifies. We will enforce the epoch as a monotonically increasing counter checked for freshness on every read, so that a compromised compartment cannot replay a stale-but-genuinely-valid tag captured from an earlier, legitimate write. This bounds, without fully eliminating, the confused-deputy gap identified in the Problem Statement -- it constrains which compartment may successfully write a given ambiguous location, not whether the value that compartment legitimately chooses to write is itself correct -- and it does so without either the blanket instrumentation cost of classical software DFI~\cite{castro2006securing} or the Cortex-A-only hardware assumptions of opportunistic real-time DFI~\cite{294543}. Because this mechanism spends its cost only where the dependence analysis is genuinely uncertain, we expect its overhead to scale with program ambiguity rather than with the number of shared variables or the volume of execution, mirroring the design goal already validated for control-flow evidence in \enola.
+\end{comment}
 
 \textbf{Task 3.3: Evidence-Guided Trust Containment and Recovery.}
-
-
 We will unify the three enforcement points developed above -- MPU faults, transition-monitor violations, and data-flow tag mismatches -- into a single compact evidence report that extends Task~2.1's encoding with a compartment identifier, the faulting program counter, and the last authenticated transition (Figure~\ref{fig:t33}). On detecting a violation, the runtime will revoke only the faulting compartment's MPU regions and invalidate its entry in the secure task-to-key mapping Thrust~2 already maintains, rather than halting or resetting the device. The same evidence report lets the verifier establish that no \emph{other} compartment accepted a transition or a data-flow tag traceable to the faulting compartment after the point of compromise -- a guarantee scoped to the authenticated channels Tasks~3.1 and~3.2 enforce, not a claim that the faulting compartment caused no harm through its own, otherwise-legitimate actions prior to detection, which no detection-based mechanism can rule out.
 
 
