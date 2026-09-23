@@ -11,6 +11,7 @@
 % or fill in before submission -- nothing below is invented.
 % ==========================================================
 \documentclass[11pt,onecolumn]{article}
+%\input{pgformat}
 \usepackage[letterpaper,margin=1in]{geometry}
 \usepackage{times}
 \usepackage{booktabs}
@@ -36,60 +37,72 @@
 \begin{document}
 
 \section*{Budget Justification}
-\vspace{-0.3cm}
-University of Texas at El Paso
+\noindent University of Texas at El Paso
 
 \subsection*{A. Senior Personnel}
-\textbf{Principal Investigator -- MD Armanuzzaman (UTEP)} requests 1.5 calendar months of
-effort in each of the three project years (4.5 calendar months over the life of the award). The
-PI will provide overall research leadership for the project, direct the development of
-verifiable trust establishment techniques for embedded and microcontroller-class systems
-(control-flow attestation, hardware-enabled trust, and FPGA/SoC security), mentor and
-supervise the graduate research assistant, manage reporting requirements, and disseminate
-project results through peer-reviewed publications and conference presentations.
-\textbf{Total (3 years): \$61,157.}
+\textbf{Principal Investigator -- MD Armanuzzaman} requests 1 calendar month of effort in each of the three project years (3 calendar months over the life of the award).
+The PI will provide overall research leadership for the project, directing Thrust~1 (Application-Specific Trusted Execution Domains, on reconfigurable FPGA hardware and ARM's
+Confidential Compute Architecture), Thrust~2 (Scalable Runtime Trust Attestation, on Cortex-M bare-metal and RTOS platforms), and Thrust~3 (Evidence-Guided Trust Containment and Recovery), mentor and supervise the graduate research assistant, manage reporting requirements, and disseminate project results through peer-reviewed publications and conference presentations.
+\textbf{Total (3 years, wages only): \$39,585.}
 
 \subsection*{B. Other Personnel}
-\textbf{Graduate Research Assistant:} One graduate student in the T\textsubscript{3}SLab is
-budgeted for each of the three project years, supporting research on embedded systems
-security, hardware-enabled trust, and FPGA/SoC security. \arman{Confirm FTE\% and
-Ph.D./M.S. level -- the Summary Proposal Budget lists one graduate student per year with a
-Ph.D.-level tuition remission (Section G.6 below), so this is assumed to be the Ph.D.
-student.} Annual stipends are \$25,864 (Year 1), \$26,640 (Year 2), and \$27,440 (Year 3).
-\textbf{Total (3 years): \$79,944.}
+\textbf{Graduate Research Assistant:} One Ph.D. student in the T\textsubscript{3}SLab is
+budgeted at 0.5 FTE (50\% time, the standard academic-year research-assistant appointment)
+for each of the three project years, supporting implementation and evaluation across all three
+thrusts: trusted-domain composition and attestation on FPGA and ARM~CCA platforms (Thrust~1),
+scalable runtime evidence generation on Cortex-M (Thrust~2), and compartmentalization and
+evidence-guided recovery (Thrust~3). Annual stipends are \$25,864 (Year 1), \$26,640 (Year 2), and \$27,440 (Year 3).
+\textbf{Total (3 years, wages only): \$79,944.}
 
 \subsection*{C. Fringe Benefits}
-Fringe benefits are calculated using UTEP's federally negotiated composite fringe benefit
-rates for faculty and graduate research assistants: \$8,354 (Year 1), \$8,461 (Year 2), and
-\$8,572 (Year 3). \textbf{Total Fringe Benefits (3 years): \$25,387.}
+Fringe benefits are calculated using UTEP's current rates:
+\begin{itemize}
+	\item Faculty: premium monthly rate of \$878.69 and benefits rate of 17.03\%.
+	\item Graduate students: premium monthly rate of \$286.50 and benefits rate of 0.88\%.
+\end{itemize}
+Applying these rates over the PI's 4.5 calendar months and the Ph.D. student's stipend across
+the three project years:
+%\begin{itemize}
+%	\item PI Fringe (3 years): \$14,369.
+%	\item Ph.D. Student Fringe (3 years): \$11,018.
+%\end{itemize}
+\textbf{Total Fringe Benefits (3 years): \$25,387.}
 
 \subsection*{D. Equipment}
-\$0. No single item of equipment exceeding \$10,000 is requested; smaller embedded-security
-evaluation hardware is budgeted under Materials and Supplies (Section G.1).
+\$0.
 
 \subsection*{E. Travel}
 A total of \$5,000 per year (domestic only) is budgeted to support travel for the PI and the
 graduate research assistant to attend top-tier security conferences, including but not limited
 to IEEE S\&P, ACM CCS, USENIX Security, NDSS, and ACSAC, consistent with UTEP and NSF
-travel policies. \textbf{Total (3 years): \$15,000.}
+travel policies. Costs include airfare, registration fees, lodging, per diem (meals), and
+ground transportation. \textbf{Total (3 years): \$15,000.}
 
 \subsection*{F. Participant Support Costs}
 \$0.
 
 \subsection*{G. Other Direct Costs}
 \begin{enumerate}[label=\arabic*.,leftmargin=1.6em]
-	\item \textbf{Materials and Supplies:} \$10,000 (Year 1), \$0 (Year 2), \$0 (Year 3).
-	Year 1 funds support one-time acquisition of embedded-security evaluation hardware and
-	lab consumables (e.g., microcontroller/FPGA evaluation boards, side-channel evaluation
-	tooling, and development boards). \arman{Confirm/expand itemized list if research.gov
-	requires per-item breakdown.} \textbf{Total: \$10,000.}
+	\item \textbf{Materials and Supplies:} \$10,000 (Year 1), \$0 (Year 2), \$0 (Year 3). Year 1
+	funds a one-time acquisition of the embedded-security evaluation boards and testbed used throughout the three-year award:
+	\begin{itemize}
+		\item An Arm MPS3 Cortex prototyping system (V2M-MPS3-0341A, Kintex UltraScale
+		FPGA) for the attestation prototype, providing an FPGA-hosted Cortex-M profile with
+		TrustZone-M and PACBTI for the strongest enforcement tier -- \$5,980.
+		\item An 802.15.4 radio module for the Contiki-NG and RIOT-OS testbeds -- approx.
+		\$1,500.
+		\item An Ethernet-capable board for the wired TCP/IP stacks -- approx. \$1,000.
+		\item Peripherals and consumables (power supplies, cabling, connectors, and spare
+		parts) to support the testbed across all three years -- \$1,520.
+	\end{itemize}
+	 \textbf{Total: \$10,000.}
 	\item \textbf{Publication Costs:} \$0 (Year 1), \$2,500 (Year 2), \$2,500 (Year 3), to
 	cover open-access publication and conference proceedings fees as results become
 	available. \textbf{Total: \$5,000.}
 	\item \textbf{Consultant Services:} None.
 	\item \textbf{Computer Services:} None.
 	\item \textbf{Subawards:} None.
-	\item \textbf{Other (Tuition):} Graduate student tuition remission of \$6,902 per year is
+	\item \textbf{Other (Tuition):} Ph.D. student tuition remission of \$6,902 per year is
 	included for three years, totaling \textbf{\$20,706}. Tuition is excluded from the
 	indirect cost base in accordance with NSF and UTEP policy.
 \end{enumerate}
@@ -100,8 +113,7 @@ Year 1: \$75,906, Year 2: \$69,883, Year 3: \$71,405. \textbf{Total (3 years): \
 
 \subsection*{I. Indirect Costs}
 Indirect costs are calculated at UTEP's federally negotiated rate of 53.5\% of Modified Total
-Direct Costs (MTDC). MTDC excludes tuition and other unallowable categories: \$69,004
-(Year 1), \$62,981 (Year 2), and \$64,503 (Year 3). \textbf{Total Indirect Costs (3 years):
+Direct Costs (MTDC). MTDC excludes tuition and other unallowable categories. \textbf{Total Indirect Costs (3 years):
 \$105,121.}
 
 \subsection*{J. Total Amount Requested}
