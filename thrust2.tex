@@ -62,8 +62,7 @@ We will correspondingly develop verifier algorithms that use these localized hin
 For continuously executing firmware, we will further investigate checkpointed and epoch-based attestation that periodically finalizes and authenticates bounded execution intervals, allowing runtime verification to continue indefinitely without requiring program termination or evidence growth proportional to total execution time.
 
 
-\textbf{Task 2.2: Attestation of Interrupt-Driven and Multitasking Execution}
-
+\textbf{Task 2.2: Attestation of Interrupt-Driven and Multitasking Execution.}
 Embedded systems rarely execute as a single linear control-flow path.
 In RTOS-based firmware, hardware interrupts, timer-driven preemption, exception handling, and scheduler-mediated task switching create dynamic execution patterns that do not map cleanly to a single static control-flow graph.
 As a result, attesting only the main application is insufficient: it cannot establish whether asynchronous and multitasking execution remained authorized, nor whether privileged transitions preserved the intended runtime trust boundary.
