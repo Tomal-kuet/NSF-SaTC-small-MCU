@@ -1,0 +1,122 @@
+DATA MANAGEMENT AND SHARING PLAN
+Submitted to:
+Direct For Computer & Info Scie & Enginr (CSE), Division Of Computer and Network Systems (CNS),
+Secure & Trustworthy Cyberspace
+
+================================================================================
+1. Embedded trust research data and software
+================================================================================
+
+Data or Research Product Category General Information
+Data or Research Product Category: Embedded trust research data and software
+Description: The project will generate hardware/software measurements, compiler
+passes, firmware, and benchmark data across three thrusts. Thrust 1
+(trusted-domain composition and attestation) produces FPGA enclave artifacts from
+the BYOTee toolchain and Root-monitor firmware for ARM's Confidential Compute
+Architecture, evaluated on the ARM Fixed Virtual Platform, an Arm Juno R2 board,
+and Radxa ROCK 5B boards running OpenCCA. Thrust 2 (runtime trust attestation)
+produces LLVM instrumentation extending the ENOLA control-flow attestation
+engine, with evidence-size and overhead measurements on the ARM V2M-MPS3 board.
+Thrust 3 (compartmentalization and recovery) produces a partitioning tool,
+transition-monitor, and data-flow tagging runtime, with overhead and
+recovery-time measurements on the V2M-MPS3 and RA8M1 boards. All thrusts share
+benchmark comparisons against BEEBS and BenchIoT.
+Responsible Investigator: MD Armanuzzaman (PI)
+
+Access Policies and Limitations
+Access Limitation(s)/Exception(s): Contingent coordinated vulnerability disclosure
+Explanation(s) and Justification(s) of Concern(s): All data and software in this
+category are released without access restriction as a matter of course, since
+none of it is attack tooling, personally identifiable, or export-controlled. The
+only circumstance under which release would be delayed is if evaluation against a
+third-party reference implementation (for example, ARM's Trusted Firmware-A or
+TF-RMM) incidentally surfaces a genuine, previously unknown vulnerability; in that
+case the finding is held privately and disclosed to the maintainer under standard
+coordinated-disclosure practice before publication, while the rest of the
+project's outputs are released on schedule.
+
+Data Standards and Metadata
+Data/Metadata Standard: C, LLVM IR, CSV, JSON, Markdown/PDF
+Additional Details: Source code and compiler passes are written in C and LLVM IR;
+firmware and monitor code targets the TF-A/TF-RMM and Cortex-M toolchains used in
+the Evaluation Plan. Measurement data (evidence size, latency, overhead, and
+trusted-computing-base size) is stored as CSV with a documented schema describing
+each field and the experiment that produced it. Configuration artifacts (FVP
+platform configs, board BSPs, MPU/GPT manifests) are stored as plain text or JSON
+alongside the code that consumes them, so an experiment can be reconstructed
+without guessing undocumented state. Documentation is Markdown and PDF.
+
+Data or Research Product Provenance
+Data Source: New Data Collection
+Additional Details: All research data in this category is generated directly by
+hardware and software experiments described in the Evaluation Plan; none of it is
+synthetic or produced by a large language model. Every record is tagged with the
+generating platform (FVP, Juno R2, ROCK 5B, V2M-MPS3, or EK-RA8M1), build or
+experiment configuration, and software commit, so its origin, accountability, and
+reproducibility do not depend on external documentation.
+
+Public Archiving
+Data Sharing Location: Public Archiving
+Additional Details: GitHub (commercially hosted) is the working repository for
+code, data, and documentation; tagged releases mirror to Zenodo with DOIs, and
+publications deposit through NSF's public access repository. Software uses a
+permissive license (MIT/BSD) and data a Creative Commons license; both release as
+results become ready and remain available indefinitely. Third-party code (e.g.,
+ARM's TF-A/TF-RMM, LLVM) keeps its own license. GitHub's access controls, branch
+protection, and signed releases protect against unauthorized modification. Data
+and documentation are also retained at UTEP for at least three years post-award.
+
+================================================================================
+2. Educational materials
+================================================================================
+
+Data or Research Product Category General Information
+Data or Research Product Category: Educational materials
+Description: The project will produce lab modules and challenge material
+developed for the PI's undergraduate and graduate systems-security course (CS
+4390/5390, System Security: Attack and Defense for Binaries) and for the MITRE
+Embedded Capture-the-Flag team the PI advises.
+Responsible Investigator: MD Armanuzzaman (PI)
+
+Access Policies and Limitations
+Access Limitation(s)/Exception(s): None
+Explanation(s) and Justification(s) of Concern(s): Educational materials are
+released without restriction; none contain sensitive, personally identifiable,
+or export-controlled information.
+
+Data Standards and Metadata
+Data/Metadata Standard: Markdown, PDF
+Additional Details: Lab modules, challenge descriptions, and course material are
+authored in Markdown and PDF with accompanying source code and configuration
+files in the same formats used by the research software they are drawn from.
+
+Data or Research Product Provenance
+Data Source: New Data Collection
+Additional Details: Educational materials are authored directly by the PI and
+project personnel, derived from the project's own research outputs; none are
+synthetic or produced by a large language model.
+
+Public Archiving
+Data Sharing Location: Public Archiving
+Additional Details: Educational materials are shared on GitHub under a Creative
+Commons license, consistent with the PI's existing practice of sharing
+capture-the-flag and course material with the community he teaches and competes
+in.
+
+================================================================================
+Prior Experience
+================================================================================
+The PI has a record of releasing research artifacts responsibly: both BYOTee,
+the FPGA-based trusted-execution framework Thrust 1 builds on, and ENOLA, the
+control-flow attestation system Thrust 2 builds on, have been open-sourced with
+their implementations and evaluations publicly released.
+
+================================================================================
+Ethics and Human Subjects
+================================================================================
+This project involves no human subjects and no personally identifiable
+information: every dataset is a hardware or software measurement collected from
+equipment the PI's lab owns or controls, or from public reference implementations
+evaluated in emulation, so no IRB approval will be requested. Student researchers
+who contribute to the project do so as project personnel and, where appropriate,
+co-authors, not as human-subject participants.
