@@ -55,7 +55,7 @@ Rather than recording complete execution traces whose size grows with the number
 A central objective is to reduce this prover-side cost without weakening the integrity guarantees the verifier relies on.
 
 
-As preliminary work, we developed \enola~\cite{armanuzzaman2026enola}: unlike prior approaches evaluated on multi-core Cortex-A processors or requiring hardware modifications, \enola targets a single-core, off-the-shelf ARMv8.1-M Cortex-M85 MCU, demonstrating that scalable control-flow evidence can be generated on commodity, resource-constrained embedded processors.
+As preliminary work, we developed \enola~\cite{armanuzzaman2026enola}: unlike prior approaches evaluated on multi-core Cortex-A processors or requiring hardware modifications, \enola targets a single-core, off-the-shelf Cortex-M85 ARMv8.1-M MCU, demonstrating that scalable control-flow evidence can be generated on commodity, resource-constrained embedded processors.
 The verifier first sends a challenge, after which the TEE-hosted \enola attestation engine initializes the measurement keys and protection mechanisms.
 During program execution, compiler-inserted instrumentation records a basic-block occurrence trace while ARM Pointer Authentication instructions incrementally compute separate measurements for forward and backward control-flow transfers.
 The occurrence trace is maintained in TrustZone-protected memory, whereas the forward and backward measurements are retained in compiler-reserved registers so that neither is exposed in memory dumps.
