@@ -1,31 +1,21 @@
 % !TEX root = main.tex
 \section{Background}
 \textbf{Architecture.}
-Embedded systems span a wide range of platforms, from resource-constrained microcontrollers to application processors and heterogeneous FPGA-based systems-on-chip.
-This project focuses on three representative classes: FPGA SoCs, ARM Cortex-A systems that implement Armv9.2-A with the Realm Management Extension (RME) of the ARM Confidential Compute Architecture (CCA), and ARM Cortex-M-based systems.
-An FPGA SoC integrates a fixed processor subsystem with programmable logic connected through on-chip interconnects.
-The processor subsystem typically executes system software and manages external memory, while the programmable logic can be configured with soft-core processors, local block RAM, peripherals, and communication modules.
-Cortex-A processors provide an MMU and four exception levels, EL0--EL3, and run Linux-class software.
-Armv9.2-A adds the optional RME, which extends TrustZone's Normal and Secure worlds with a Realm world and a Root world.
-Trusted firmware in the Root world at EL3, the monitor, programs the Granule Protection Table (GPT), which assigns each physical granule to a world, and a hardware Granule Protection Check (GPC) validates every physical access against it.
-Cortex-M-based systems range from single-core microcontrollers to multicore and heterogeneous SoCs and commonly execute bare-metal firmware or lightweight RTOS workloads.
-Cortex-M processors provide \textit{Thread} mode for normal software execution and \textit{Handler} mode for exceptions and interrupts.
-They support privileged and unprivileged execution and include general-purpose registers, including stack-pointer registers, as well as system registers for managing processor state and configuration.
-Recent Cortex-M architectures also incorporate security features such as TrustZone, memory protection units (MPUs), and hardware cryptographic support.
+This project targets three representative embedded platform classes: FPGA SoCs, which couple a fixed processor subsystem with reconfigurable programmable logic; ARM Cortex-A systems implementing Armv9.2-A's Realm Management Extension (RME) of the ARM Confidential Compute Architecture (CCA); and ARM Cortex-M microcontrollers (MCUs).
+The FPGA's processor subsystem runs system software and manages external memory, while its programmable logic can be configured into soft-core processors, peripherals, and custom interconnects.
+Cortex-A processors run Linux-class software under an MMU-based exception-level hierarchy.
+Armv9.2-A's optional RME extends TrustZone's Normal and Secure worlds with a Realm and a Root world, whose EL3 monitor programs the Granule Protection Table (GPT) to assign each physical granule to a world, enforced in hardware by the Granule Protection Check (GPC).
+Cortex-M MCUs run bare-metal firmware or lightweight RTOS workloads with only privileged and unprivileged execution states, and recent architectures add security features such as TrustZone, memory protection units (MPUs), and hardware cryptographic support.
 
 \textbf{Trusted Execution Environments.}
-Trusted execution environments (TEEs) use hardware-enforced isolation to protect security-sensitive code and data from the rest of the system.
-An embedded TEE typically separates execution into a trusted domain and a general-purpose or untrusted domain, with controlled interfaces governing communication across the security boundary.
-The trusted domain may host cryptographic services and secure storage, while the untrusted domain executes the remaining firmware or operating-system software.
-On Cortex-A processors, TrustZone divides execution into Normal and Secure worlds under an EL3 monitor, and RME extends this separation to physical memory via the Root-world monitor described above.
-On Cortex-M processors, TrustZone enforces this separation through controlled transitions using designated entry points, security-aware control-transfer instructions (i.e., \texttt{SG}, \texttt{BLNS}), and protected exception handling.
-FPGA SoCs commonly integrate hard-core processors, such as ARM Cortex-A or RISC-V cores, which may provide their own TEE support.
-Their programmable logic can also be configured with soft-core processors, and interconnects to construct additional execution domains.
-Although TEEs provide a foundation for trusted execution, their security depends on the correctness of the trusted software and the integrity of the hardware resources and configurations that enforce the isolation boundary.
-
+Trusted execution environments (TEEs) use hardware-enforced isolation to separate a trusted domain, which may host cryptographic services and secure storage, from an untrusted domain running the remaining firmware or OS software, with controlled interfaces governing communication across the boundary.
+On Cortex-A, TrustZone's Normal and Secure worlds are separated by an EL3 monitor reached via the \texttt{SMC} instruction, further partitioned by RME as described above.
+On Cortex-M, TrustZone enforces separation through controlled transitions -- designated entry points, security-aware control-transfer instructions (i.e., \texttt{SG}, \texttt{BLNS}), and protected exception handling.
+FPGA SoCs may add hard-core Cortex-A or RISC-V TEE support, or construct additional domains from soft-core logic.
+A TEE's security ultimately depends on the correctness of its trusted software and the integrity of the hardware that enforces the isolation boundary.
 
 \textbf{Hardware-Assisted Isolation and Cryptography.}
 Beyond software-configurable isolation, both processor classes used in this project expose dedicated hardware for security enforcement.
 On Cortex-A, the GPC checks every physical access against the Root-world monitor's GPT in hardware, so RME's world isolation holds at the granularity of individual memory granules even if the OS or hypervisor above the monitor is compromised~\cite{li2022design,armcca}.
 On Cortex-M, the ARM Cortex-M85 implements the ARMv8.1-M Pointer Authentication (PA) extension, which uses the QARMA tweakable block cipher to generate keyed Pointer Authentication Codes (PACs) over pointer or data values via instructions such as \texttt{PAC} and \texttt{PACG}, with keys drawn from dedicated, non-memory-mapped 128-bit registers selected by security state and privilege level~\cite{m85,avanzi2017qarma}.
-Hardware-assisted PA computation is substantially faster than software-based cryptographic measurement: on a 25,MHz Cortex-M85, a single \texttt{PACG} operation requires approximately 12 CPU cycles, versus 5,768 cycles for an optimized software BLAKE2s computation, at least a \textbf{480$\times$ speedup}.
+Hardware-assisted PA computation is substantially faster than software-based cryptographic measurement: on a 25 MHz Cortex-M85, a single \texttt{PACG} operation requires approximately 12 CPU cycles, versus 5,768 cycles for an optimized software BLAKE2s computation, at least a \textbf{480$\times$ speedup}.
