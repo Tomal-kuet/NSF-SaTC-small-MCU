@@ -22,36 +22,50 @@ control-flow, task, interrupt, and other security-relevant events while bounding
 \textbf{Related Work.}
 Early remote attestation established only static software integrity or trustworthy execution state~\cite{seshadri2005pioneer,li2011viper,kong2014pufatt,armknecht2013security,eldefrawy2012smart}, not runtime control-flow hijacking.
 Control-flow attestation (CFA) addresses this limitation by reporting execution behavior.
-C-FLAT~\cite{abera2016c}, OAT~\cite{sun2020oat}, Blast, DIAT~\cite{abera2019diat}, ARI~\cite{wangari}, ReCFA~\cite{zhang2021recfa}, SpecCFA~\cite{caulfield2024speccfa}, ScaRR~\cite{toffalini2019scarr}, and whole-program path attestation~\cite{yadav2023whole} explore different tradeoffs in trace granularity, evidence size, and verifier complexity, while CFA+~\cite{299850} combines local control-flow enforcement with lightweight attestation.
+C-FLAT~\cite{abera2016c}, OAT~\cite{sun2020oat}, Blast~\cite{yadav2023whole}, DIAT~\cite{abera2019diat}, ARI~\cite{wangari}, ReCFA~\cite{zhang2021recfa}, SpecCFA~\cite{caulfield2024speccfa}, and ScaRR~\cite{toffalini2019scarr} explore different tradeoffs in trace granularity, evidence size, and verifier complexity, while CFA+~\cite{299850} combines local control-flow enforcement with lightweight attestation.
 Specialized-hardware approaches, including VRASED~\cite{nunes2019vrased}, ACFA~\cite{caulfield2023acfa}, LiteHAX~\cite{dessouky2018litehax}, Tiny-CFA~\cite{nunes2021tiny}, LO-FAT~\cite{dessouky2017fat}, and IDA~\cite{arkannezhadida}, provide stronger monitoring capabilities but often rely on dedicated or modified hardware~\cite{neto2025pearts}.
 Despite these advances, prior works are limited in supporting long-running, interrupt-driven, and multitasking execution while simultaneously bounding evidence size, runtime overhead, and verifier complexity.
 Thrust~2 addresses this gap by developing scalable runtime evidence and verification mechanisms for realistic bare-metal and RTOS-based embedded systems.
 
-\begin{wrapfigure}{r}{0.48\textwidth}
+\begin{wraptable}{r}{0.52\textwidth}
 	\centering
 	\vspace{-8pt}
-	\includegraphics[width=0.46\textwidth]{figs/Enola-overview.pdf}
-	\caption{Preliminary foundation of \textit{Thrust~2}: \enola architecture and workflow, leveraging cryptographic hardware.}
-	\label{fig:enola}
-	\vspace{-10pt}
-\end{wrapfigure}
-
+	\footnotesize
+	\setlength{\tabcolsep}{3pt}
+	\begin{tabular}{lcccc}
+		\toprule
+		Scheme & Trace & Meas. & Verif. & Eval.\ size \\
+		\midrule
+		Naive trace & $O(l)$ & $O(1)$ & $O(l)$ & n/a \\
+		OAT~\cite{sun2020oat} & $O(n)$ & $O(1)$ & $O(l|E|)$ & $n{<}1{,}000$ \\
+		C-FLAT~\cite{abera2016c} & n/a & $O(2^{|V|})$ & $O(2^{|V|})$ & $|E|{=}322$ \\
+		LO-FAT~\cite{dessouky2017fat} & n/a & $O(2^{|V|})$ & $O(2^{|V|})$ & $|E|{=}322$ \\
+		Blast~\cite{yadav2023whole} & $O(2^{|V|})$ & $O(1)$ & $O(2^{|V|})$ & $|V|{<}987$ \\
+		\textbf{\enola}~\cite{armanuzzaman2026enola} & $\mathbf{O(|V|)}$ & $O(1)$ & $O(2^{|V|})$ & $\mathbf{|V|{<}5{,}480}$ \\
+		\bottomrule
+	\end{tabular}
+	\caption{\textit{Thurst2} foundation:Trace/measurement/verification complexity and largest evaluated size ($l$: executed branches, $n$: forward branches, $E$: CFG edges, $V$: basic blocks). \enola is the only scheme linear in program size.}
+	\label{tab:enola}
+	\vspace{-8pt}
+\end{wraptable}
 
 \textbf{Task 2.1: Compact and Verifier-Efficient Runtime Evidence}
-We will investigate runtime attestation mechanisms that keep both transmitted evidence and verifier cost practical as embedded applications become larger and execute for longer periods.
-Rather than recording complete execution traces whose size grows with the number of executed control-flow transfers, we will develop compact execution representations whose size is primarily determined by program structure.
-A central objective is to jointly optimize prover-side evidence generation and verifier-side reconstruction so that reducing communication overhead does not simply transfer excessive complexity to the remote verifier.
+We will investigate runtime attestation mechanisms that keep transmitted evidence, verifier cost, and prover-side runtime overhead practical as embedded applications grow larger, run longer, and move from bare-metal execution to a single task hosted on an RTOS.
+Rather than recording complete execution traces whose size grows with the number of executed control-flow transfers, we will develop compact execution representations whose size is primarily determined by program basic blocks.
+A central objective is to reduce this prover-side cost without weakening the integrity guarantees the verifier relies on.
 
 
-As preliminary work, we developed \enola~\cite{armanuzzaman2026enola}, which demonstrates that scalable control-flow evidence can be generated on commodity embedded processors without modifying the processor architecture.
-As illustrated in Figure~\ref{fig:enola}, the verifier first issues a fresh challenge, after which the trusted \enola attestation engine initializes the measurement keys and protection mechanisms.
+As preliminary work, we developed \enola~\cite{armanuzzaman2026enola}: unlike prior approaches evaluated on multi-core Cortex-A processors or requiring hardware modifications, \enola targets a single-core, off-the-shelf ARMv8.1-M Cortex-M85 MCU, demonstrating that scalable control-flow evidence can be generated on commodity, resource-constrained embedded processors.
+The verifier first sends a challenge, after which the TEE-hosted \enola attestation engine initializes the measurement keys and protection mechanisms.
 During program execution, compiler-inserted instrumentation records a basic-block occurrence trace while ARM Pointer Authentication instructions incrementally compute separate measurements for forward and backward control-flow transfers.
-The occurrence trace is maintained in TrustZone-protected memory, whereas the forward and backward measurements are retained in compiler-reserved registers so that they are not exposed to ordinary program memory.
-At the end of execution, these components are combined with the verifier challenge into an authenticated report and transmitted to the verifier, which reconstructs candidate execution paths and validates them against the received measurements.
-This design makes the transmitted authenticator linear in the number of program basic blocks rather than the length of the executed path and substantially reduces communication cost.
+The occurrence trace is maintained in TrustZone-protected memory, whereas the forward and backward measurements are retained in compiler-reserved registers so that neither is exposed in memory dumps.
+At the end of execution, the collected evidence is combined with the verifier's challenge into an authenticated report and transmitted to the verifier, which reconstructs candidate execution paths and validates them against the received measurements.
+This design makes the transmitted authenticator linear in the number of program basic blocks rather than the length of the executed path, substantially reducing communication cost relative to prior schemes (Table~\ref{tab:enola}).
 
-
-
+\begin{comment}
+% --- Original Task 2.1 "later" contribution (ambiguity-aware evidence for
+% verifier-side path disambiguation), replaced with the store-hardening /
+% TEE-overhead direction below per PI request -- kept here for reference. ---
 Although \enola significantly reduces transmitted evidence, this compression exposes a new scalability challenge at the verifier.
 Different execution paths can sometimes produce the same basic-block occurrence information, requiring the verifier to explore multiple candidate paths before finding one consistent with the received measurements.
 This ambiguity can cause verification cost to grow rapidly for programs with increasingly complex control-flow structures.
@@ -60,6 +74,12 @@ Building on this observation, we will develop ambiguity-aware runtime evidence t
 We will design static analyses to identify such ambiguous regions, determine what additional runtime information is necessary to distinguish their feasible paths, and generate this information selectively rather than increasing evidence for the entire program.
 We will correspondingly develop verifier algorithms that use these localized hints to prune infeasible paths early and bound reconstruction effort around the ambiguous regions.
 For continuously executing firmware, we will further investigate checkpointed and epoch-based attestation that periodically finalizes and authenticates bounded execution intervals, allowing runtime verification to continue indefinitely without requiring program termination or evidence growth proportional to total execution time.
+\end{comment}
+
+\enola's remaining bottleneck is not evidence size but how often it invokes TrustZone: eliminating backward-edge context switches still leaves forward-edge occurrence recorded through a trampoline call into the secure world; our own evaluation attributes roughly a quarter of \enola's runtime overhead to these context switches.
+We will extend \enola to a single task hosted on an RTOS by relocating occurrence-trace into an MPU-protected region of normal-world memory, using \emph{store hardening}: Cortex-m's unprivileged store instructions check unprivileged-mode MPU permissions regardless of the processor's current privilege level, so a region can be made writable only by trace-recording instrumentation and unreachable from ordinary application, RTOS, or ISR code, avoiding a privileged-mode or secure-world transition on every branch.
+This replaces trust in TrustZone with a compiler-verified isolation property enforced by the MPU, so the guarantee holds even though the RTOS kernel itself remains outside the TCB, consistent with the threat model.
+We will extend \enola's code scanner to also verify this MPU property and the forward-edge CFI check store hardening depends on.
 
 
 \textbf{Task 2.2: Attestation of Interrupt-Driven and Multitasking Execution.}
@@ -110,5 +130,5 @@ This will enable the verifier to establish not only that individual applications
 \textbf{Preliminary Results.}
 We implemented and evaluated \enola on the ARM Versatile Express V2M-MPS3 prototyping board configured as a Cortex-M85 microcontroller running at 25 MHz with the AN555 FPGA image and BSP v1.3.0~\cite{ARMMPS3}.
 Our software evaluation used the LLVM 16.0.0 ARM embedded toolchain and included a syringe-pump application, the Embench benchmark suite, and the wolfSSL cryptographic library, with multiple compiler optimization levels.
-Across Embench, \enola reduced the average attestation data from 21,009 bytes with Blast to 397 bytes under O2 and 224 bytes under Oz, corresponding to a reduction of at least 52$\times$ and demonstrating that the transmitted evidence is determined primarily by program structure rather than execution length.
+Across Embench, \enola reduced the average attestation data from 21,009 bytes with Blast~\cite{yadav2023whole} to 397 bytes under O2 and 224 bytes under Oz, corresponding to a reduction of at least 52$\times$ and demonstrating that the transmitted evidence is determined primarily by program structure rather than execution length.
 These results establish the feasibility of the prover-side compact evidence targeted in Task 2.1, while motivating our proposed work on verifier ambiguity and continuously executing firmware.
