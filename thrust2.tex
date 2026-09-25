@@ -23,8 +23,8 @@ control-flow, task, interrupt, and other security-relevant events while bounding
 Early remote attestation established only static software integrity or trustworthy execution state~\cite{seshadri2005pioneer,li2011viper,kong2014pufatt,armknecht2013security,eldefrawy2012smart}, not runtime control-flow hijacking.
 Control-flow attestation (CFA) addresses this limitation by reporting execution behavior.
 C-FLAT~\cite{abera2016c}, OAT~\cite{sun2020oat}, Blast, DIAT~\cite{abera2019diat}, ARI~\cite{wangari}, ReCFA~\cite{zhang2021recfa}, SpecCFA~\cite{caulfield2024speccfa}, ScaRR~\cite{toffalini2019scarr}, and whole-program path attestation~\cite{yadav2023whole} explore different tradeoffs in trace granularity, evidence size, and verifier complexity, while CFA+~\cite{299850} combines local control-flow enforcement with lightweight attestation.
-Specialized-hardware approaches, including VRASED~\cite{nunes2019vrased}, ACFA~\cite{caulfield2023acfa}, LiteHAX~\cite{dessouky2018litehax}, Tiny-CFA~\cite{nunes2021tiny}, LO-FAT~\cite{dessouky2017fat}, and IDA~\cite{arkannezhadida}, provide stronger monitoring capabilities but often rely on dedicated or modified hardware.
-Despite these advances, prior approaches are limited in supporting long-running, interrupt-driven, and multitasking execution while simultaneously bounding evidence size, runtime overhead, and verifier complexity.
+Specialized-hardware approaches, including VRASED~\cite{nunes2019vrased}, ACFA~\cite{caulfield2023acfa}, LiteHAX~\cite{dessouky2018litehax}, Tiny-CFA~\cite{nunes2021tiny}, LO-FAT~\cite{dessouky2017fat}, and IDA~\cite{arkannezhadida}, provide stronger monitoring capabilities but often rely on dedicated or modified hardware~\cite{neto2025pearts}.
+Despite these advances, prior works are limited in supporting long-running, interrupt-driven, and multitasking execution while simultaneously bounding evidence size, runtime overhead, and verifier complexity.
 Thrust~2 addresses this gap by developing scalable runtime evidence and verification mechanisms for realistic bare-metal and RTOS-based embedded systems.
 
 \begin{wrapfigure}{r}{0.48\textwidth}
