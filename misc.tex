@@ -3,8 +3,10 @@
 \section{Evaluation Plan}
 % ==========================================================
 
-\textbf{Evaluation and Industry Collaboration.}
-The research outcomes will be evaluated in terms of security, effectiveness, performance, and cost. \arman{Placeholder: we will evaluate and integrate the proposed algorithms and systems with an industry collaborator's embedded products. A collaboration letter is attached: Dr.~[Name], [Title], [Company].}
+\textbf{Evaluation and Synergistic Collaborations.}
+The research outcomes will be evaluated in terms of security, effectiveness, performance, and cost.
+With our industry collaborators, we will evaluate and integrate the proposed algorithms and systems with real-world embedded products, including those from Octavo Systems.
+\textbf{A collaboration letter is attached:} John H. Walsh, President of Octavo Systems.
 
 \textbf{Implementation Plan.}
 We will implement the proposed algorithms, mechanisms, and systems on representative hardware platforms for each thrust. For Thrust~1, the decoupled Secure-world monitor and trusted-domain composition will be implemented on the ARM Fixed Virtual Platform (FVP) with Armv9.2-A RME support; as of this proposal, no commercially available development board exposes RME, and we will migrate to RME-capable silicon (e.g., automotive-class platforms built on Cortex-A720AE or Neoverse~V3AE) should it become available during the project period. We will complement FVP with an Arm Juno~R2 board for real-hardware validation of the Root-monitor and world-switching firmware, and with Radxa ROCK~5B (RK3588) boards for OpenCCA-based software emulation of CCA/Realm semantics on non-RME Cortex-A hardware. For Thrust~2, runtime attestation will be implemented on the ARM Versatile Express V2M-MPS3 board (Cortex-M85), consistent with our preliminary \enola results. For Thrust~3, compartmentalization and recovery will be implemented and evaluated on both the V2M-MPS3 board and the ARM Evaluation Kit for the RA8M1 MCU (EK-RA8M1, Cortex-M85). The proposed program-analysis and instrumentation algorithms will be implemented as LLVM~\cite{lattner2004llvm} compiler passes, and the proposed binary and data-flow analyses will be built on top of Ghidra~\cite{ghidra} and angr~\cite{shoshitaishvili2016sok}.
