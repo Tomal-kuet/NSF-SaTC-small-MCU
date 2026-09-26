@@ -2,7 +2,7 @@
 \label{sb:t2}
 
 \textbf{Problem Statement.}
-Establishing a trusted execution domain, or simply bootstrapping firmware in the normal world, does not guarantee that it continues to execute as intended.
+Establishing a trusted execution domain, or simply bootstrapping firmware in the Normal world, does not guarantee that it continues to execute as intended.
 Secure boot and conventional remote attestation establish only properties of the loaded software or the initial system state, leaving runtime control-flow hijacking attacks undetected.
 An attacker who exploits a runtime vulnerability can therefore redirect control flow (e.g., ROP, JOP exploits), manipulate task execution, or abuse asynchronous system events without changing the initially attested binary.
 Control-flow attestation (CFA) addresses part of this problem by allowing a remote verifier to reason about the execution path taken by a program.
@@ -76,8 +76,8 @@ We will correspondingly develop verifier algorithms that use these localized hin
 For continuously executing firmware, we will further investigate checkpointed and epoch-based attestation that periodically finalizes and authenticates bounded execution intervals, allowing runtime verification to continue indefinitely without requiring program termination or evidence growth proportional to total execution time.
 \end{comment}
 
-\enola's remaining bottleneck is not evidence size but how often it invokes TrustZone: eliminating backward-edge context switches still leaves forward-edge occurrence recorded through a trampoline call into the secure world; our own evaluation attributes roughly a quarter of \enola's runtime overhead to these context switches.
-We will extend \enola to a single task hosted on an RTOS by relocating occurrence-trace into an MPU-protected region of normal-world memory, using \emph{store hardening}: Cortex-m's unprivileged store instructions check unprivileged-mode MPU permissions regardless of the processor's current privilege level, so a region can be made writable only by trace-recording instrumentation and unreachable from ordinary application, RTOS, or ISR code, avoiding a privileged-mode or secure-world transition on every branch.
+\enola's remaining bottleneck is not evidence size but how often it invokes TrustZone: eliminating backward-edge context switches still leaves forward-edge occurrence recorded through a trampoline call into the Secure world; our own evaluation attributes roughly a quarter of \enola's runtime overhead to these context switches.
+We will extend \enola to a single task hosted on an RTOS by relocating occurrence-trace into an MPU-protected region of Normal-world memory, using \emph{store hardening}: Cortex-m's unprivileged store instructions check unprivileged-mode MPU permissions regardless of the processor's current privilege level, so a region can be made writable only by trace-recording instrumentation and unreachable from ordinary application, RTOS, or ISR code, avoiding a privileged-mode or Secure-world transition on every branch.
 This replaces trust in TrustZone with a compiler-verified isolation property enforced by the MPU, so the guarantee holds even though the RTOS kernel itself remains outside the TCB, consistent with the threat model.
 We will extend \enola's code scanner to also verify this MPU property and the forward-edge CFI check store hardening depends on.
 
@@ -112,7 +112,7 @@ The next task's saved context is restored only after this secure binding has bee
 
 Similarly, for asynchronous interrupt handling, the evidence binds the interrupted task, interrupt source, selected ISR, ISR execution measurement, and authenticated return.
 %For execution, the evidence binds task identities, scheduler-mediated transitions, and the corresponding suspend and resume operations.
-The same secure-world call that switches keys also produces a \emph{Trace Commit}: a tag computed over the per-context measurement state while that context's key is exclusively resident, rather than in the exploitable normal world, tying control-flow evidence to the correct task identity and preventing stale measurement reuse.
+The same Secure-world call that switches keys also produces a \emph{Trace Commit}: a tag computed over the per-context measurement state while that context's key is exclusively resident, rather than in the exploitable Normal world, tying control-flow evidence to the correct task identity and preventing stale measurement reuse.
 Nested interrupts and preemptive scheduling extend this to an authenticated hierarchy of simultaneously suspended contexts.
 
 \begin{comment}
