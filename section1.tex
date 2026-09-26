@@ -1,21 +1,21 @@
 % !TEX root = main.tex
 % ==========================================================
+%\vspace{-10pt}
 \section{Overview and Objectives}
 \label{sec:overview}
 % ==========================================================
 
 Embedded systems have become fundamental components of modern computing infrastructure, supporting sensing, communication, control,
-and decision-making in applications ranging from industrial automation and transportation to medical devices, smart infrastructure, and the Internet of
-Things (IoT).
+and decision-making in applications ranging from industrial automation and transportation to medical devices, smart infrastructure, and the Internet of Things (IoT).
 Two ARM processor classes dominate this landscape.
-Cortex-M microcontrollers (MCUs) run bare-metal or RTOS firmware without a memory management unit (MMU) and account for three-quarters of ARM's annual chip shipments and almost half of the more than 200 billion chips it has shipped to date~\cite{arm2021chips}.
 Cortex-A application processors, which provide an MMU and run Linux-class software, are increasingly used in automotive cockpit and driver-assistance platforms~\cite{arm2024automotive} and in IoT and edge-AI devices such as smart cameras and factory-floor machines~\cite{arm2025a320}.
+Cortex-M microcontrollers (MCUs) run bare-metal or RTOS firmware without a memory management unit (MMU) and account for three-quarters of ARM's annual chip shipments and almost half of the more than 200 billion chips it has shipped to date~\cite{arm2021chips}.
+Alongside these ARM classes, reconfigurable FPGA SoCs with programmable logic have gained traction, especially in edge-acceleration settings where fixed silicon falls short.
 The number of connected IoT devices alone is projected to reach 39 billion by the end of 2030~\cite{iotanalytics2025}.
-Unlike traditional desktop and server systems, embedded devices often operate under tight computation, memory, energy, and timing constraints,
-interact directly with sensors and actuators, while remaining field deployed for years without any inspection of their software.
+Unlike traditional desktop and server systems, embedded devices often operate under tight computation, memory, energy, and timing constraints, interact directly with sensors and actuators, while remaining field deployed for years without any inspection of their software.
 Consequently, compromise of an embedded device can affect not only software confidentiality and integrity, but also the physical
 processes that the device monitors or controls, and it can remain undetected for as long as no operator is present to notice anomalous behavior.
-Recognizing these risks, recent guidance from multiple federal agencies now requires device-level cybersecurity capabilities spanning exactly the application domains named above: NIST's IoT Core Baseline profile underlies the U.S. Cyber Trust Mark consumer-labeling program~\cite{nist2022ir8425}, the FDA's 2023 premarket cybersecurity guidance is now a statutory requirement for medical devices~\cite{fda2023cybersecurity}, and CISA's Secure-by-Design principles, joined by seventeen U.S.\ and international partner agencies, call for the same shift toward built-in, continuously verifiable device trustworthiness this proposal pursues~\cite{cisa2023sbd}.
+Recognizing these risks, recent guidance from multiple federal agencies now requires device-level cybersecurity capabilities spanning exactly the application domains named above: NIST's IoT Core Baseline profile underlies the U.S. Cyber Trust Mark consumer-labeling program~\cite{nist2022ir8425}, the FDA's 2023 premarket cybersecurity guidance is now a statutory requirement for medical devices~\cite{fda2023cybersecurity}, and CISA's Secure-by-Design principles, joined by seventeen U.S. and international partner agencies, call for the same shift toward built-in, continuously verifiable device trustworthiness this proposal pursues~\cite{cisa2023sbd}.
 
 These risks are not hypothetical.
 In July 2025, researchers exploited Bluetooth-stack vulnerabilities to achieve remote code execution on the infotainment ECUs of vehicles from Mercedes-Benz, Volkswagen, and \v{S}koda~\cite{perfektblue2025}.
@@ -25,15 +25,12 @@ Each incident shares a common structure: a memory-corruption or authentication f
 \textbf{Because embedded devices cannot rely on a human to notice compromise or a routine patch cycle to fix it, establishing and continuously verifying their trustworthiness, remotely and throughout deployment, is essential, not merely desirable.}
 
 The firmware and software of these systems are commonly developed in memory-unsafe languages such as C and C++.
-On Cortex-M, weak process isolation results from the absence of an MMU and only two hardware privilege levels, privileged and unprivileged, rather than an exception-level hierarchy, so the memory-corruption vulnerabilities above routinely lead to control-flow hijacking, unauthorized memory or peripheral access, and complete software compromise.
-Cortex-A systems have an MMU and exception levels, which strengthen isolation among Normal-world processes.
-Yet the TEEs that both classes provide through ARM TrustZone offer only a single Secure world, in which privileged secure-side software, such as the TEE OS or secure firmware and its drivers, shares one hardware protection domain and can read all Normal-world memory, so a flaw in it can expose every trusted service and the Normal world~\cite{pinto2019demystifying,cerdeira2020sok,cerdeira2022rezone,kuhne2024aster}.
-Modern embedded platforms increasingly provide improved hardware security mechanisms, including secure boot, memory protection units (MPUs), trusted
-execution environments (TEEs), hardware cryptographic engines, and architectural control-flow protection such as ARM's Pointer Authentication and
-Branch Target Identification extension~\cite{m85}.
-On Cortex-A, ARM's Confidential Compute Architecture (CCA) further adds Granule Protection Tables that let trusted firmware control access to physical memory per granule~\cite{li2022design}; ARM positions CCA for both cloud and edge workloads~\cite{armcca}, and it is arriving in automotive-class silicon such as Neoverse V3AE~\cite{arm2024v3ae}.
-However, the presence of these mechanisms alone neither guarantees that the hardware/software composition of the system can be verified nor that its
-trustworthiness holds throughout later execution.
+On Cortex-M, weak process isolation results from the absence of an MMU and only two hardware privilege levels, so the memory-corruption vulnerabilities lead to control-flow hijacking, unauthorized memory or peripheral access, and complete software compromise.
+Cortex-A systems have an MMU and exception levels, which strengthen isolation among normal-world processes.
+Yet the TEEs that both classes provide through ARM TrustZone offer only a single Secure world, in which privileged secure-side software, such as the TEE OS or secure firmware and its drivers, shares one hardware protection domain, so a flaw in it can expose every trusted service and the normal world~\cite{pinto2019demystifying,cerdeira2020sok,cerdeira2022rezone,kuhne2024aster}.
+Modern embedded platforms increasingly provide improved hardware security mechanisms, including memory protection units (MPUs), hardware cryptographic engines, and architectural control-flow protection such as ARM's Pointer Authentication and Branch Target Identification extension~\cite{m85}.
+On Cortex-A, ARM's Confidential Compute Architecture (CCA) further adds Granule Protection Tables (GPT) that let trusted firmware control access to physical memory per granule~\cite{li2022design}; ARM positions CCA for both cloud and edge workloads~\cite{armcca}, and it is arriving in automotive-class silicon such as Neoverse V3AE~\cite{arm2024v3ae}.
+However, the presence of these mechanisms alone neither guarantees that the hardware/software composition of the system can be verified nor that its trustworthiness holds throughout later execution.
 
 \textbf{First, existing systems provide limited ability to determine precisely what constitutes the trusted execution environment.}
 Prior work has pursued more flexible trusted execution along several lines, but none makes the composition of an application-specific trusted domain remotely verifiable on off-the-shelf hardware.
@@ -120,7 +117,7 @@ containment and recovery following compromise.
 	\vspace{-0.2cm}
 	\caption{Proposed three research thrusts of \sys.}
 	\label{fig:thrusts}
-	\vspace{-0.4cm}
+	\vspace{-0.6cm}
 \end{figure}
 
 \subsection{Proposed Research}
@@ -148,7 +145,7 @@ Ambiguity-guided data-flow policies enforce directional MPU permissions where a 
 \textbf{Intellectual Merit.}
 This project will advance the system architectures, hardware/software TCB design, and algorithms needed to establish, verify, and preserve trust in embedded systems.
 It will develop application-specific trusted execution domains with verifiable resource composition and isolation; scalable runtime attestation for bare-metal and RTOS-based systems; and evidence-guided compartmentalization for localized containment, recovery, and re-attestation. 
-Together, these contributions will create a continuous trust lifecycle spanning trusted-environment construction, runtime verification, and post-compromise restoration.
+Together, these contributions will create a trust lifecycle spanning trusted-environment construction, runtime verification, and post-compromise restoration.
 
 \subsection{Relevance to SaTC}
 This project is highly relevant to SaTC as it will strengthen the security of embedded systems, pervasive in industrial automation, transportation, healthcare, and smart infrastructure.
@@ -161,4 +158,4 @@ The PI is a tenure-track Assistant Professor of Computer Science at UTEP and Dir
 His research spans systems and software security, embedded and operating-system security, FPGA security, trusted execution environments, and cyber-physical systems, and has appeared in IEEE/ACM \textbf{EMSOFT}~\cite{armanuzzaman2026enola}, ACM \textbf{CCS}~\cite{ma2026wejust,ma2025ectf}, ACM \textbf{AsiaCCS}~\cite{byotee24}, \textbf{NDSS}~\cite{shang2025mia}, IEEE \textbf{INFOCOM}~\cite{guan2025TLS}, IEEE \textbf{TIFS}~\cite{Rui2025QFL}, IEEE \textbf{SEED}~\cite{zhao24tee}, and ACM \textbf{SAC}~\cite{tan24canary}.
 He releases open-source code for his published work, and his \byotee~\cite{armanuzzaman2024building} and \enola~\cite{armanuzzaman2026enola} prototypes are the foundations for Thrusts~1 and~2.
 He serves as a technical committee member for \textbf{IMC}, \textbf{USENIX Security}, \textbf{RAID}, \textbf{ACSAC}, \textbf{TDSC}, and \textbf{CCS}, and received the Distinguished Artifact Reviewer Award at ACM CCS 2024.
-Seven years of MITRE eCTF participation, as team member, captain, and advisor at UB and now Faculty Advisor of Team UTEP, gave him hands-on Cortex-M hardware-software co-design experience that supports Thrust~3.
+Seven years of MITRE eCTF participation, as team member, captain, and advisor at UB and now faculty advisor of team UTEP, gave him hands-on Cortex-M hardware-software co-design experience that supports Thrust~3.
