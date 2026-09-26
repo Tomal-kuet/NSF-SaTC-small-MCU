@@ -43,8 +43,8 @@ On Cortex-A, ReZone~\cite{cerdeira2022rezone} partitions the TrustZone Secure wo
 Reconfigurable hardware~\cite{armanuzzaman2024building} and, on Cortex-A, CCA's granule protection suggest ways out, but a fundamental question remains: \emph{\ul{how can an embedded system construct an application-specific trusted execution environment whose hardware and software composition can itself be verified by a remote party?}}
 
 \textbf{Second, establishing a trusted environment does not guarantee that its software continues to execute as intended.}
-A correctly loaded program can later be compromised through a runtime attack (e.g, ROP, JOP, Data-only) that secure boot and conventional attestation cannot see.
-Control-flow attestation narrows this gap: C-FLAT~\cite{abera2016c}, OAT~\cite{sun2020oat}, ARI~\cite{wangari}, and whole-program path attestation~\cite{yadav2023whole} allows remote verifier reason about the execution path a program took, however but their evidence or measurement cost still grows with execution duration or program complexity, and none adequately represents the interrupts, task transitions, and context switches of realistic bare-metal and RTOS execution rather than a single-program trace.
+A correctly loaded program can later be compromised through a runtime attack (e.g., ROP, JOP, Data-only) that secure boot and conventional attestation cannot see.
+Control-flow attestation narrows this gap: C-FLAT~\cite{abera2016c}, OAT~\cite{sun2020oat}, ARI~\cite{wangari}, and whole-program path attestation~\cite{yadav2023whole} allow a remote verifier to reason about the execution path a program took, but their evidence or measurement cost still grows with execution duration or program complexity, and none adequately represents the interrupts, task transitions, and context switches of realistic bare-metal and RTOS execution rather than a single-program trace.
 Thus, a second fundamental question is: \emph{\ul{how can embedded systems provide scalable and protected runtime evidence that enables a verifier to detect runtime violations across bare-metal and multitasking environments without evidence growing with execution duration?}}
 
 \textbf{Third, existing trusted execution mechanisms provide limited support for preserving trust after a localized compromise.}
@@ -113,7 +113,7 @@ containment and recovery following compromise.
 		};
 		\node[font=\scriptsize, above=0mm of t1] {\emph{TEE: Verifying Trust Anchor}};
 		\node[font=\scriptsize, above=0mm of t2] {\emph{REE: Firmware Runtime Evidence}};
-		\node[font=\scriptsize, above=0mm of t3] {\emph{REE: Firmware Decoupling}};
+		\node[font=\scriptsize, above=0mm of t3] {\emph{REE: Firmware Compartmentalization}};
 		\draw[arr] (t1) -- (t2);
 		\draw[arr] (t2) -- (t3);
 	\end{tikzpicture}
@@ -126,7 +126,7 @@ containment and recovery following compromise.
 \subsection{Proposed Research}
 As illustrated in Figure~\ref{fig:thrusts}, this proposal describes a three-step research agenda, namely \sys: \textit{\underline{V}erifiable Trust \underline{E}stablishment for Embedded \underline{S}ys\underline{t}ems}, driven by the following overarching scientific goal: \textbf{\textit{Design and develop novel compilers, algorithms, and hardware-software methods that configure \ul{verifiable execution domains for trusted applications}, \ul{enable scalable and interrupt-/RTOS-aware remote runtime attack detection for firmware logic}, and \ul{decouple normal-world software into safe, recoverable compartments}}}.
 To this end, \sys first realizes trusted execution domains on programmable FPGA hardware and then leverages ARM CCA's hardware isolation primitives on fixed-silicon Cortex-A systems.
-For remote attestation with RTOS support, it leverages TEE hardware, compiler development, and underlying hardware cryptographic engines.
+For remote attestation with RTOS support, it leverages TEE hardware, compiler-based instrumentation, and underlying hardware cryptographic engines.
 Lastly, \sys achieves compartmentalization of firmware logic through compiler-driven partitioning, analysis techniques, and hardware-assisted enforcement mechanisms.
 To achieve this overall goal, we propose the following three research thrusts:
 
@@ -147,7 +147,7 @@ Ambiguity-guided data-flow policies enforce directional MPU permissions where a 
 
 \textbf{Intellectual Merit.}
 This project will advance the system architectures, hardware/software TCB design, and algorithms needed to establish, verify, and preserve trust in embedded systems.
-It will develop application-specific trusted execution domains with verifiable resource composition and isolation; scalable runtime attestation RTOS-based systems; and evidence-guided compartmentalization for localized containment, recovery, and re-attestation. 
+It will develop application-specific trusted execution domains with verifiable resource composition and isolation; scalable runtime attestation for bare-metal and RTOS-based systems; and evidence-guided compartmentalization for localized containment, recovery, and re-attestation. 
 Together, these contributions will create a continuous trust lifecycle spanning trusted-environment construction, runtime verification, and post-compromise restoration.
 
 \subsection{Relevance to SaTC}

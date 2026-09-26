@@ -32,9 +32,16 @@ This thrust therefore asks the following fundamental question: \textbf{\textit{H
 
 
 
+
+\textbf{Task 3.1: Real-Time- and Data-Flow-Aware Compartmentalization with Interrupt-Safe Transitions.}
+We will develop a novel compiler-driven partitioning algorithm that assigns application code and data to compartments using a dependence-graph analysis, with two objectives not considered by existing work: MPU region-budget feasibility under a real-time deadline, and directional separation of a shared variable's readers from its writers.
+This dependence analysis is the foundation the remaining tasks in this thrust build their enforcement and recovery mechanisms on.
+As shown in Figure~\ref{fig:t31}, the partitioner consumes this dependence graph together with each task's worst-case-execution-time (WCET) budget and produces compartments annotated with directional MPU regions.
+
+
 \begin{wrapfigure}{r}{0.52\textwidth}
 	\centering
-	\vspace{-10pt}
+	%\vspace{-10pt}
 	\begin{tikzpicture}[
 			font=\tiny,
 			box/.style={draw, rounded corners, align=center, minimum height=0.6cm, inner sep=2pt, fill=white},
@@ -69,11 +76,6 @@ This thrust therefore asks the following fundamental question: \textbf{\textit{H
 	\label{fig:t31}
 	\vspace{-10pt}
 \end{wrapfigure}
-
-\textbf{Task 3.1: Real-Time- and Data-Flow-Aware Compartmentalization with Interrupt-Safe Transitions.}
-We will develop a novel compiler-driven partitioning algorithm that assigns application code and data to compartments using a dependence-graph analysis, with two objectives not considered by existing work: MPU region-budget feasibility under a real-time deadline, and directional separation of a shared variable's readers from its writers.
-This dependence analysis is the foundation the remaining tasks in this thrust build their enforcement and recovery mechanisms on.
-As shown in Figure~\ref{fig:t31}, the partitioner consumes this dependence graph together with each task's worst-case-execution-time (WCET) budget and produces compartments annotated with directional MPU regions.
 
 We will make every cross-compartment control transfer pass through a single trusted transition monitor reached only via \texttt{SVC}.
 At boot, the monitor is configured to run at the highest priority any compartment can ever request, and that configuration is then locked against modification by any running compartment.
