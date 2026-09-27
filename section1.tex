@@ -34,53 +34,46 @@ However, the presence of these mechanisms alone neither guarantees that the hard
 
 \textbf{First, existing systems provide limited ability to determine precisely what constitutes the trusted execution environment.}
 Prior work has pursued more flexible trusted execution along several lines, but none makes the composition of an application-specific trusted domain remotely verifiable on off-the-shelf hardware.
-vTZ~\cite{hua2017vtz}, Sanctuary~\cite{brasser2019sanctuary}, and Keystone~\cite{Keystone2020} construct multiple isolated domains by virtualizing TrustZone and partitioning memory access, but TEE and REE still time-share the hardware resources, leaving them susceptible to side-channel attacks.
+Several systems construct multiple isolated domains by virtualizing TrustZone and partitioning memory access, but the TEE still time-share the hardware resources, leaving them susceptible to side-channel attacks~\cite{hua2017vtz,brasser2019sanctuary,Keystone2020}.
 RISC-V-specific or new-hardware solutions such as CURE~\cite{bahmani2021cure}, Composite Enclaves~\cite{schneider2020pie}, and HECTOR-V~\cite{nasahl2020hector} instead grant exclusive access to cores, caches, or peripherals, but are not deployable on off-the-shelf platforms.
-On Cortex-A, ReZone~\cite{cerdeira2022rezone} partitions the TrustZone Secure world but relies on SoC-specific controllers, and recent CCA work isolates user-space applications~\cite{zhang2023shelter}, Realm sandboxes~\cite{kuhne2024aster}, or Realm communication~\cite{sadi2026sharing}, but none decomposes the Secure world or makes the resources that compose a domain verifiable.
+On Cortex-A, ReZone~\cite{cerdeira2022rezone} partitions the TrustZone Secure world but relies on SoC-specific controllers, and recent CCA work isolates user-space applications~\cite{zhang2023shelter} or Realm sandboxes~\cite{kuhne2024aster}, but none decomposes the Secure world or makes the resources that compose a domain verifiable.
 Reconfigurable hardware~\cite{armanuzzaman2024building} and, on Cortex-A, CCA's granule protection suggest ways out, but a fundamental question remains: \emph{\ul{how can an embedded system construct an application-specific trusted execution environment whose hardware and software composition can itself be verified by a remote party?}}
 
-\textbf{Second, establishing a trusted environment does not guarantee that its software continues to execute as intended.}
-A correctly loaded program can later be compromised through a runtime attack (e.g., ROP, JOP, Data-only) that secure boot and conventional attestation cannot see.
-Control-flow attestation narrows this gap: C-FLAT~\cite{abera2016c}, OAT~\cite{sun2020oat}, ARI~\cite{wangari}, and whole-program path attestation~\cite{yadav2023whole} allow a remote verifier to reason about the execution path a program took, but their evidence or measurement cost still grows with execution duration or program complexity, and none adequately represents the interrupts, task transitions, and context switches of realistic bare-metal and RTOS execution rather than a single-program trace.
+\textbf{Second, establishing a trusted environment does not guarantee that the REE software running alongside it continues to execute as intended.}
+A correctly loaded Rich Execution Environment (REE) or Normal-world program can later be compromised through a runtime attack (e.g., ROP, JOP, Data-only) that secure boot and static attestation cannot see.
+Control-flow attestation narrows this gap by allowing a remote verifier to reason about the execution path a program took, but their evidence or measurement cost still grows with execution duration or program complexity, and none adequately represents the interrupts, task transitions, and context switches of realistic bare-metal and RTOS execution rather than a single-program trace~\cite{abera2016c,sun2020oat,wangari,yadav2023whole}.
 Thus, a second fundamental question is: \emph{\ul{how can embedded systems provide scalable and protected runtime evidence that enables a verifier to detect runtime violations across bare-metal and multitasking environments without evidence growing with execution duration?}}
 
 \textbf{Third, existing trusted execution mechanisms provide limited support for preserving trust after a localized compromise.}
 An application-specific trusted domain protects only the most security-critical logic; the bulk of embedded firmware still runs as a single, monolithic Normal-world RTOS application sharing one privilege level and address space, so one vulnerability can compromise the entire device.
-Existing MCU compartmentalization mechanisms~\cite{clements2018aces,kim2018securing,khan2023ec,mera2022d} isolate code, data, and peripherals, but none safely composes this isolation with control-flow protection under interrupts, enforces fine-grained access control over shared data, or provides a remote verifier with evidence to localize and recover from a compromised compartment.
-Thus, a third fundamental question is: \emph{\ul{how can an MCU's Normal-world application be fine-grained and interrupt-safe compartmentalized regarding both control and data flow, so that a violation produces evidence letting a remote verifier localize, contain, and selectively recover from it?}}
+Existing MCU compartmentalization mechanisms~\cite{clements2018aces,kim2018securing,khan2023ec,mera2022d} isolate code, data, and peripherals, but fails to isolate with control-flow protection under interrupts, enforces fine-grained access control over shared data, or provides a remote verifier with evidence to localize and recover from a compromised compartment.
+Thus, a third fundamental question is: \emph{\ul{how can an MCU's REE application be fine-grained and interrupt-safe compartmentalized regarding both control and data flow, so that a violation produces evidence letting a remote verifier localize, contain, and selectively recover from it?}}
 
 These limitations share a common root: \textbf{embedded trust is typically treated as a property established at a particular point in time, rather than as a property that must be established, verified, and preserved throughout system execution.}
 This project proposes \sys: \textit{\underline{V}erifiable Trust \underline{E}stablishment for Embedded \underline{S}ys\underline{t}ems}, with the objective of developing a continuous trust model for embedded systems.
-VEST will investigate how trusted execution environments can be constructed from explicitly selected hardware and software resources and exposed to a remote verifier; how hardware-assisted runtime evidence can efficiently represent control-flow, task, interrupt, and
-other security-relevant execution events; and how runtime evidence can be combined with fine-grained isolation to determine the scope of a violation,
-contain affected components, and selectively restore and re-attest them.
+\sys will investigate how trusted execution environments can be constructed from explicitly selected hardware and software resources and exposed to a remote verifier; how hardware-assisted runtime evidence can efficiently represent task control-flow, interrupt, and security-relevant execution events; and how to combine runtime evidence with fine-grained isolation to determine the scope of a violation, contain affected components, and selectively restore them.
 Rather than treating trusted execution, runtime attestation, and compartmentalization as independent mechanisms, \sys will connect them through a common trust lifecycle in which the verifier can reason about \emph{\ul{what environment was established}}, \emph{\ul{how that environment executed}}, and \emph{\ul{what remains trustworthy following a localized compromise}}.
 Thrust~1 spans reconfigurable SoC FPGAs and Cortex-A processors through ARM CCA, while Thrusts~2 and~3 target Cortex-M bare-metal and RTOS software, where the absence of an MMU makes runtime evidence and MPU-based compartmentalization most critical.
-
 Accordingly, the project is driven by three overarching research objectives:
 
-\begin{itemize}
+\begin{itemize}[nosep]
 	\item \textbf{\textit{O1}: Establish verifiable application-specific trust.}
-	Develop architectures and resource-composition mechanisms that construct
-	trusted execution environments according to application requirements and
-	enable remote verification of their security-relevant hardware and software
-	configuration.
+	Develop architectures and resource-composition mechanisms that construct trusted execution environments according to application requirements and enable remote verification of their security-relevant hardware and software configuration.
 	
 	\item \textbf{\textit{O2}: Maintain trust through scalable runtime evidence.}
-	Develop efficient runtime measurement and verification techniques for
-	bare-metal and RTOS-based embedded systems that capture security-relevant
+	Develop efficient runtime measurement and verification techniques for bare-metal and RTOS-based embedded systems that capture security-relevant
 	execution while bounding measurement and communication overhead.
 	
 	\item \textbf{\textit{O3}: Preserve trust after localized compromise.}
-	Develop evidence-guided compartmentalization, containment, recovery, and
-	re-attestation mechanisms that identify affected trusted domains while
+	Develop evidence-guided compartmentalization, containment, recovery, and re-attestation mechanisms that identify affected trusted domains while
 	allowing confidence in unaffected components to be retained.
 \end{itemize}
 
-Achieving these objectives will move embedded-system security beyond
-one-time trust establishment toward a model in which trust can be continuously
-reasoned about from system construction, through runtime execution, to
+Achieving these objectives will move embedded-system security beyond one-time trust establishment toward a model in which trust can be continuously reasoned about from system construction, through runtime execution, to
 containment and recovery following compromise.
+
+
+\subsection{Proposed Research}
 \begin{figure}[t]
 	\centering
 	\begin{tikzpicture}[
@@ -120,7 +113,6 @@ containment and recovery following compromise.
 	\vspace{-0.6cm}
 \end{figure}
 
-\subsection{Proposed Research}
 As illustrated in Figure~\ref{fig:thrusts}, this proposal describes a three-step research agenda, namely \sys: \textit{\underline{V}erifiable Trust \underline{E}stablishment for Embedded \underline{S}ys\underline{t}ems}, driven by the following overarching scientific goal: \textbf{\textit{Design and develop novel compilers, algorithms, and hardware-software methods that configure \ul{verifiable execution domains for trusted applications}, \ul{enable scalable and interrupt-/RTOS-aware remote runtime attack detection for firmware logic}, and \ul{decouple Normal-world software into safe, recoverable compartments}}}.
 To this end, \sys first realizes trusted execution domains on programmable FPGA hardware and then leverages ARM CCA's hardware isolation primitives on fixed-silicon Cortex-A systems.
 For remote attestation with RTOS support, it leverages TEE hardware, compiler-based instrumentation, and underlying hardware cryptographic engines.

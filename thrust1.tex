@@ -124,7 +124,7 @@ The central challenges are (i) exclusively assigning peripherals, interrupts, an
 	\centering
 	\vspace{-8pt}
 	\includegraphics[width=0.46\textwidth]{figs/BYOTee-attestation-proposal.pdf}
-	\vspace{-3pt}
+	\vspace{-5pt}
 	\caption{Verifiable trusted-domain establishment- $\mathbf{A}_{TEE}$. The FPGA Configuration Module (\textbf{\textit{FCM}}) establishes the hardware configuration measurement-  $\mathbf{A}_H$, while \textbf{\textit{HW-ATT}} measures the protected firmware- $\mathbf{A}_S$ and application for remote verification.}
 	\label{fig:byotee_attestation}
 	\vspace{-10pt}
@@ -140,7 +140,7 @@ In our preliminary work, \byotee~\cite{armanuzzaman2024building} demonstrates th
 During trust establishment, the FCM verifies and decrypts the protected FPGA bitstream, configures the enclave hardware, and generates a measurement $\mathbf{A}_H$ representing the instantiated hardware configuration.
 After the enclave is established, the protected application and associated firmware are loaded into enclave memory.
 As illustrated in Figure~\ref{fig:byotee_attestation}, HW-ATT accesses the protected enclave memory, securely maintains attestation keys, and measures the trusted software components to produce $\mathbf{A}_S$.
-The hardware measurement $\mathbf{A}_H$  and software measurement $\mathbf{A}_S$ are then cryptographically bound into authenticated evidence \textbf{$\mathbf{A}_{TEE}$} for the remote verifier.
+The hardware measurement $\mathbf{A}_H$  and $\mathbf{A}_S$ are then cryptographically bound into authenticated evidence \textbf{$\mathbf{A}_{TEE}$} for the remote verifier.
 % dThe verifier's fresh challenge is incorporated into the attestation process to provide freshness and prevent replay of previously valid evidence.
 
 We will generalize this hardware/software trust-establishment model to fixed-silicon embedded platforms, where the trusted-domain configuration is not represented by a single measurable bitstream.
