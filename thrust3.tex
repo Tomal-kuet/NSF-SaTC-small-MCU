@@ -166,5 +166,5 @@ This guarantee is scoped to what Tasks~3.1 and~3.2 authenticate; it does not cla
 \end{wrapfigure}
 \end{comment}
 
-We will then recover the affected compartment rather than the whole device: using Thrust~1's domain-construction and attestation mechanisms, we rebuild compartment's trust measurement, re-verify, and re-admit it into the running system, avoiding a full reboot.
+We will then recover the affected compartment rather than the whole device: applying Thrust~1's evidence model on Cortex-M, the runtime re-measures the compartment's MPU configuration ($\mathbf{A}_H$) and code ($\mathbf{A}_S$), and the verifier re-verifies and re-admits it into the running system, avoiding a full reboot.
 The central challenge is minimizing state revocation lists and per-compartment key storage across compartments to prevent replay attacks or reuse a revoked key, while keeping this bookkeeping within real-time budgets.
