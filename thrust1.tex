@@ -6,7 +6,7 @@
 Trusted execution environments (TEEs) provide an important foundation for protecting security-sensitive computation, but their trust boundaries are typically determined by the underlying platform rather than by the requirements of individual applications.
 Different trusted applications have fundamentally different security and resource requirements.
 One may require only a processor, private memory, and access to a sensor, while another may additionally require communication interfaces, cryptographic services, or other peripherals.
-Nevertheless, today's TEEs typically provide only Secure world with no further isolation possible among the trusted applications, exposing them to a fixed hardware/software trusted computing base (TCB) and causing them to trust resources and privileged components that are unnecessary for their execution.
+Nevertheless, today's TEEs typically provide only one Secure world with no further isolation possible among the trusted applications, exposing them to a fixed hardware/software trusted computing base (TCB) and causing them to trust resources and privileged components that are unnecessary for their execution.
 This over-provisioning violates least privilege, bloats the TCB, and increases the attack surface; for instance, OP-TEE, a Cortex-A Secure-world OS, has 238K lines of code itself~\cite{OP-TEE}.
 Moreover, this temporal resource sharing causes cache and timing side-channel vulnerabilities.
 Secondly, the composition of the TEE is often not explicit to a remote verifier.
@@ -116,7 +116,7 @@ We will develop a \emph{decoupled Secure world} in which a small Root-world moni
 Because a GPT distinguishes only worlds, the monitor installs a separate GPT view on a domain's cores at each domain switch, invalidating cached GPT information; in this view only the domain's own granules and declared shared windows are accessible, so a compromised TEE OS or partition manager cannot reach another domain's granules.
 Since the GPC vets physical addresses after translation, the design needs only new Root-monitor firmware on RME-capable processors and leaves the RMM, realm translation tables, and each domain's page tables untouched.
 It thus complements \byotee's hardware-level construction with a software-defined one on standard ARM silicon, while the domain specification remains architecture-independent.
-The central challenges are (i) exclusively assigning peripherals, interrupts, and DMA masters, which the GPC alone cannot enforce (the SMMU checks DMA against one system-wide GPT and interrupts) and which prior CCA work addresses only for user-space applications and Realm VMs~\cite{zhang2023shelter,bertschi2024devlore}, (ii) preserving real-time behavior despite GPT invalidation on every domain switch, and (iii) determining whether a requested domain can be faithfully realized given residual shared state such as caches.
+The central challenges are (i) exclusively assigning peripherals, interrupts, and DMA masters, which the GPC alone cannot enforce (the SMMU checks DMA against one system-wide GPT; the GPC ignores interrupts) and which prior CCA work addresses only for user-space applications and Realm VMs~\cite{zhang2023shelter,bertschi2024devlore}, (ii) preserving real-time behavior despite GPT invalidation on every domain switch, and (iii) determining whether a requested domain can be faithfully realized given residual shared state such as caches.
 
 
 

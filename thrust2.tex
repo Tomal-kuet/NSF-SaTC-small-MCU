@@ -44,7 +44,7 @@ Thrust~2 addresses this gap by developing scalable runtime evidence and verifica
 		\textbf{\enola}~\cite{armanuzzaman2026enola} & $\mathbf{O(|V|)}$ & $O(1)$ & $O(2^{|V|})$ & $\mathbf{|V|{<}5{,}480}$ \\
 		\bottomrule
 	\end{tabular}
-	\caption{\textit{Thurst2} foundation:Trace/measurement/verification complexity and largest evaluated size ($l$: executed branches, $n$: forward branches, $E$: CFG edges, $V$: basic blocks). \enola is the only scheme linear in program size.}
+	\caption{\textit{Thrust~2} foundation: Trace/measurement/verification complexity and largest evaluated size ($l$: executed branches, $n$: forward branches, $E$: CFG edges, $V$: basic blocks). \enola is the only scheme linear in program size.}
 	\label{tab:enola}
 	\vspace{-8pt}
 \end{wraptable}
@@ -77,7 +77,7 @@ For continuously executing firmware, we will further investigate checkpointed an
 \end{comment}
 
 \enola's remaining bottleneck is not evidence size but how often it invokes TrustZone: eliminating backward-edge context switches still leaves forward-edge occurrence recorded through a trampoline call into the Secure world; our own evaluation attributes roughly a quarter of \enola's runtime overhead to these context switches.
-We will extend \enola to a single task hosted on an RTOS by relocating occurrence-trace into an MPU-protected region of Normal-world memory, using \emph{store hardening}: Cortex-m's unprivileged store instructions check unprivileged-mode MPU permissions regardless of the processor's current privilege level, so a region can be made writable only by trace-recording instrumentation and unreachable from ordinary application, RTOS, or ISR code, avoiding a privileged-mode or Secure-world transition on every branch.
+We will extend \enola to a single task hosted on an RTOS by relocating occurrence-trace into an MPU-protected region of Normal-world memory, using \emph{store hardening}: Cortex-M's unprivileged store instructions check unprivileged-mode MPU permissions regardless of the processor's current privilege level, so a region can be made writable only by trace-recording instrumentation and unreachable from ordinary application, RTOS, or ISR code, avoiding a privileged-mode or Secure-world transition on every branch.
 This replaces trust in TrustZone with a compiler-verified isolation property enforced by the MPU, so the guarantee holds even though the RTOS kernel itself remains outside the TCB, consistent with the threat model.
 We will extend \enola's code scanner to also verify this MPU property and the forward-edge CFI check store hardening depends on.
 
@@ -103,10 +103,10 @@ Based on the \enola attestation engine~\cite{armanuzzaman2026enola} and its Task
 We will generalize this by assigning each task and ISR its own control-flow representation and per-context occurrence trace, recorded in the MPU-protected, store-hardened region from Task~2.1 rather than through a TrustZone call on every branch.
 The interrupt controller and vector table are configured such that interrupts are routed to a transition handler before control reaches the scheduler or the ISR itself (Figure~\ref{fig:thurst22}).
 This handler saves the currently active task's execution state and measurement context to the protected region, identifies the interrupt source and the next runnable context.
-Because a task's PA key must stay confidential rather than merely tamper-evident -- a guarantee store hardening alone does not provide; thus key switching still crosses into TrustZone.
+Key switching, however, still crosses into TrustZone, because a task's PA key must stay confidential rather than merely tamper-evident, a guarantee store hardening alone does not provide.
 Before restoring the next task's CPU state, the scheduler triggers a secure call that loads the corresponding key or key slot from a protected task-to-key mapping and binds it to the restored task identity.
 This cryptographic binding of each suspended context to its execution identity, key slot, and transition history ensures a compromised task or ISR cannot substitute, or reuse another context's measurement state.
-As a result, TrustZone's involvement is confined to per context switch, while evidence for forward branches continues to accumulate in the store-hardened MPU region.
+As a result, TrustZone's involvement is confined to one call per context switch, while evidence for forward branches continues to accumulate in the store-hardened MPU region.
 %This confines TrustZone involvement to one call per context switch rather than one per branch, while per-context trace and transition evidence continue to accumulate in the store-hardened region until finalized.
 The next task's saved context is restored only after this secure binding has been validated, and the transition is recorded as authenticated evidence for the verifier.
 
