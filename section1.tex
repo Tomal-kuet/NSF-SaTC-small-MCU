@@ -127,7 +127,7 @@ We will realize such domains on reconfigurable SoC FPGAs, where dedicated hardwa
 \textbf{Thrust 2: Scalable Runtime Trust Attestation.}
 Control-flow attestation lets a verifier detect control-flow hijacking, but existing evidence and measurement costs grow with program complexity or execution duration and provide limited support for interrupts, asynchronous events, and multitasking.
 This thrust will develop scalable runtime attestation for bare-metal and RTOS-based systems, forming evidence around control flow and augmenting it with task transitions, context switches, and interrupt execution.
-We will develop evidence-compression and verification algorithms, compiler-based instrumentation, and protected measurement runtimes that bound evidence size by static program and task structure rather than execution duration, enabling efficient remote verification.
+We will develop compiler-based instrumentation and protected measurement runtimes that bound evidence size by static program and task structure rather than execution duration, while reducing prover-side overhead.
 
 \textbf{Thrust 3: Evidence-Guided Trust Containment and Recovery.}
 Existing MCU compartmentalization mechanisms impose substantial MPU-reconfiguration overhead, leave correctness under nested interrupts unanalyzed, and leave a data-flow confused-deputy gap a compromised compartment can exploit without violating any control-flow policy.

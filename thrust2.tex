@@ -14,7 +14,7 @@ These events alter the authorized execution state and can interleave with applic
 Furthermore, the measurement state itself must remain protected while these asynchronous transitions take place.
 
 This thrust therefore asks the following fundamental question:
-\textbf{\textit{How can resource-constrained embedded systems generate compact and protected runtime evidence that enables a remote verifier to reason about authorized execution across long-running, interrupt-driven, and multitasking workloads without evidence growing with execution duration?}}
+\textbf{\textit{How can resource-constrained embedded systems generate compact and protected runtime evidence that enables a remote verifier to reason about authorized execution across interrupt-driven and multitasking workloads without evidence growing with execution duration?}}
 Addressing this requires new representations of execution, hardware-assisted measurement mechanisms, and verifier algorithms that capture
 control-flow, task, interrupt, and other security-relevant events while bounding runtime, memory, and communication overhead.
 
@@ -24,7 +24,7 @@ Early remote attestation established only static software integrity or trustwort
 Control-flow attestation (CFA) addresses this limitation by reporting execution behavior.
 C-FLAT~\cite{abera2016c}, OAT~\cite{sun2020oat}, Blast~\cite{yadav2023whole}, DIAT~\cite{abera2019diat}, ARI~\cite{wangari}, ReCFA~\cite{zhang2021recfa}, SpecCFA~\cite{caulfield2024speccfa}, and ScaRR~\cite{toffalini2019scarr} explore different tradeoffs in trace granularity, evidence size, and verifier complexity, while CFA+~\cite{299850} combines local control-flow enforcement with lightweight attestation.
 Specialized-hardware approaches, including VRASED~\cite{nunes2019vrased}, ACFA~\cite{caulfield2023acfa}, LiteHAX~\cite{dessouky2018litehax}, Tiny-CFA~\cite{nunes2021tiny}, LO-FAT~\cite{dessouky2017fat}, and IDA~\cite{arkannezhadida}, provide stronger monitoring capabilities but often rely on dedicated or modified hardware~\cite{neto2025pearts}.
-Despite these advances, prior works are limited in supporting long-running, interrupt-driven, and multitasking execution while simultaneously bounding evidence size, runtime overhead, and verifier complexity.
+Despite these advances, prior works are limited in supporting large programs and interrupt-driven, multitasking execution while simultaneously bounding evidence size and runtime overhead.
 Thrust~2 addresses this gap by developing scalable runtime evidence and verification mechanisms for realistic bare-metal and RTOS-based embedded systems.
 
 \begin{wraptable}{r}{0.52\textwidth}
@@ -60,7 +60,7 @@ The verifier first sends a challenge, after which the TEE-hosted \enola attestat
 During program execution, compiler-inserted instrumentation records a basic-block occurrence trace while ARM Pointer Authentication instructions incrementally compute separate measurements for forward and backward control-flow transfers.
 The occurrence trace is maintained in TrustZone-protected memory, whereas the forward and backward measurements are retained in compiler-reserved registers so that neither is exposed in memory dumps.
 At the end of execution, the collected evidence is combined with the verifier's challenge into an authenticated report and transmitted to the verifier, which reconstructs candidate execution paths and validates them against the received measurements.
-This design makes the transmitted authenticator linear in the number of program basic blocks rather than the length of the executed path, substantially reducing communication cost relative to prior schemes (Table~\ref{tab:enola}).
+This design makes the transmitted authenticator linear in the number of program basic blocks rather than the length of the executed path, substantially reducing communication cost and scaling to programs over 5$\times$ larger than prior schemes evaluated (Table~\ref{tab:enola}).
 
 \begin{comment}
 % --- Original Task 2.1 "later" contribution (ambiguity-aware evidence for
