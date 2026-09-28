@@ -102,13 +102,13 @@ Because validating every transfer individually would reintroduce the per-transfe
 		\node[dec, below=3mm of edge, text width=2.2cm] (amb) {Statically unambiguous?};
 		\node[box, fill=blue!16, text width=1.5cm, below left=4mm and -3mm of amb] (static) {Static MPU region: R/O reader, R/W writer};
 		\node[mech, text width=1.5cm, below right=4mm and -3mm of amb] (pa) {PA-tagged write: writer ID, def-site, epoch};
-		\node[box, fill=blue!8, text width=2.6cm, below=5mm of amb, yshift=-8mm] (check) {Checked at read, or lazily via evidence stream};
+		\node[box, fill=blue!8, text width=2.6cm, below=5mm of amb, yshift=-8mm] (check) {Checked at transition, or lazily via evidence stream};
 		\draw[arr] (edge) -- (amb);
 		\draw[arr] (amb) -- node[above,sloped,pos=0.55]{yes} (static);
 		\draw[arr] (amb) -- node[above,sloped,pos=0.55]{no} (pa);
 		\draw[arr] (pa) -- (check);
 	\end{tikzpicture}
-	\caption{\textit{Task 3.2}: unambiguous dependencies get a static, directional MPU region for free; ambiguous ones fall back to a PA-tagged write, checked at read or via the evidence stream.}
+	\caption{\textit{Task 3.2}: unambiguous dependencies get a static, directional MPU region for free; ambiguous ones fall back to a PA-tagged write, checked at the next transition or via the evidence stream.}
 	\label{fig:t32}
 	\vspace{-10pt}
 \end{wrapfigure}
@@ -119,7 +119,7 @@ The central challenge is enforcing this on Cortex-M, which has no hardware memor
 We address this challenge by letting Task~3.1's dependence graph decide, for each shared location, whether it can be protected with a static MPU region or needs a runtime check.
 Where the graph proves a single compartment is the only possible writer, we enforce that with a directional MPU region: one compartment gets read-write access, every other compartment gets read-only (or no) access, and the hardware enforces this boundary at no added cost.
 Where the graph cannot narrow the writer down to one compartment, due to pointer aliasing or interrupt-interleaved updates (Figure~\ref{fig:t32}), we fall back to a lightweight signature built on ARM's PA hardware: each write computes an authenticator over the writer's identity, the write location, and a monotonically increasing epoch, using the \texttt{PACG} instruction and the same PA keys Thrust~2 uses for control-flow evidence.
-A read recomputes this authenticator and compares it against the small set of candidate-writer keys the dependence graph could not rule out; a compromised compartment outside that set cannot forge a matching tag, and the epoch prevents replaying an old one.
+Since compartments cannot hold each other's keys, tags are checked in the Secure world at transitions or lazily by the verifier; a compromised compartment outside the candidate-writer set cannot forge a matching tag, and the epoch prevents replaying an old one.
 This bounds the confused-deputy gap by constraining which compartment may write a given ambiguous location, while spending its cost only where ambiguity cannot be statically resolved, so overhead scales with program ambiguity rather than with the number of shared variables or the volume of execution.
 \begin{comment}
 % --- Original Task 3.2 text (pre-rewrite), kept for reference. ---
@@ -131,7 +131,7 @@ Where the analysis cannot statically bound the reaching writer -- due to pointer
 
 \textbf{Task 3.3: Evidence-Guided Trust Containment and Recovery.}
 We will unify the three enforcement points developed above: MPU faults, transition-monitor violations, and data-flow tag mismatches into a single compact evidence report that extends Task~2.1's encoding with a compartment identifier, the faulting program counter, and the last authenticated transition.
-On detecting a violation, the runtime will revoke only the faulting compartment's MPU regions and invalidate its entry in the secure task-to-key mapping.
+On detecting a violation, the runtime will revoke only the faulting compartment's MPU regions and invalidate its entry in the secure compartment-to-key mapping.
 The same evidence report lets the verifier confirm that no \emph{other} compartment accepted a transition or data-flow tag from the faulting compartment after the point of compromise.
 This guarantee is scoped to what Tasks~3.1 and~3.2 authenticate; it does not claim the faulting compartment caused no harm before detection.
 
