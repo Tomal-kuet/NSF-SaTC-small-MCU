@@ -1,0 +1,30 @@
+% Standalone build wrapper for personnel.tex.
+% Produces personnel.pdf directly via pdflatex (never via Preview/Quartz export,
+% which corrupts PDF object dictionaries and gets rejected by research.gov).
+% Build with: pdflatex personnel.tex
+%
+% SaTC 2.0 requires a "List of Project Personnel and Partner Institutions" as a
+% Supplementary Document, numbered in the form: Name; Organization; Role.
+\documentclass[11pt,onecolumn]{article}
+\usepackage[letterpaper,margin=1in]{geometry}
+\usepackage{times}
+\usepackage{enumitem}
+\usepackage[colorlinks=true,linkcolor=blue,citecolor=blue,urlcolor=blue]{hyperref}
+\linespread{1.0}
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{0pt}
+\pagestyle{empty}
+\begin{document}
+
+\section*{List of Project Personnel}
+
+\subsection*{Project Personnel}
+\begin{enumerate}[leftmargin=1.8em,itemsep=0.2em]
+	\item MD Armanuzzaman; University of Texas at El Paso; PI
+	\item Malav Vyas; Palo Alto Networks; Unfunded Collaborator
+	\item John H. Walsh; Octavo Systems LLC; Unfunded Collaborator
+	\item Peter Linder; Octavo Systems LLC; Unfunded Collaborator
+\end{enumerate}
+
+
+\end{document}
