@@ -1,0 +1,32 @@
+% !TEX program = pdflatex
+% !TEX options = -shell-escape -interaction=nonstopmode "%DOC%"
+% Split wrapper: extracts the research.gov upload PDFs from main.pdf.
+% Build main.pdf first, then either:
+%   make split                                         (recommended)
+%   pdflatex -shell-escape split.tex                   (writes both PDFs)
+%   pdflatex -jobname=project-description split.tex   (pages 1-15)
+%   pdflatex -jobname=references-cited split.tex      (page 16 to the end)
+% Uses pdfTeX so the output is not rewritten by Preview/Quartz (rejected by research.gov).
+% If the project description length changes, update \pdlast below.
+\documentclass{article}
+\usepackage{pdfpages}
+\newcommand{\pdlast}{15}
+\begin{document}
+\ifnum\pdfstrcmp{\jobname}{project-description}=0
+  \includepdf[pages=1-\pdlast]{main.pdf}
+\else\ifnum\pdfstrcmp{\jobname}{references-cited}=0
+  \includepdf[pages=\the\numexpr\pdlast+1\relax-]{main.pdf}
+\else
+  % Compiled directly as split.tex: generate both PDFs if shell-escape is on.
+  \ifnum\pdfshellescape=1
+    \immediate\write18{pdflatex -interaction=nonstopmode -jobname=project-description split.tex}
+    \immediate\write18{pdflatex -interaction=nonstopmode -jobname=references-cited split.tex}
+    \typeout{split.tex: wrote project-description.pdf and references-cited.pdf}
+    \noindent Wrote \texttt{project-description.pdf} and \texttt{references-cited.pdf}.
+  \else
+    \typeout{split.tex: shell-escape is off; run `make split' instead}
+    \noindent Shell-escape is off, so nothing was split.
+    Run \texttt{make split} or \texttt{pdflatex -shell-escape split.tex}.
+  \fi
+\fi\fi
+\end{document}
