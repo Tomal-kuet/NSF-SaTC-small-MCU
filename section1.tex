@@ -82,24 +82,24 @@ containment and recovery following compromise.
 			lifecycle/.style={draw, rounded corners, align=left, text width=14.8cm, inner sep=5pt, minimum height=0.5cm},
 			arr/.style={-{Latex[length=3mm]}, line width=1.2mm},
 		]
-		\node[thrust, fill=green!10] (t1) {
-			\textbf{Thrust 1: Application-Specific\\Trusted Execution Domains}\\[1pt]
+		\node[thrust, text width=4.3cm, inner sep=3pt, fill=green!10] (t1) {
+			\textbf{Thrust 1: Application-Specific\\Trusted Execution Domains}\\[0pt]
 			{\scriptsize\raggedright
-			\textbf{Task 1.1:} Trusted-Domain Composition with least privilege\\[1pt]
-			\textbf{Task 1.2:} Verifiable Hardware/Software Establishment\par}
+			\textbf{Task 1.1:} Application-Specific Trusted-Domain Composition\\[0pt]
+			\textbf{Task 1.2:} Verifiable Trusted-Domain Establishment\par}
 		};
-		\node[thrust, fill=blue!8, right=6mm of t1] (t2) {
-			\textbf{Thrust 2: Scalable Runtime\\Trust Attestation}\\[1pt]
+		\node[thrust, text width=4.4cm, inner sep=3pt, fill=blue!8, right=4mm of t1] (t2) {
+			\textbf{Thrust 2: Scalable Runtime\\Trust Attestation}\\[0pt]
 			{\scriptsize\raggedright
-			\textbf{Task 2.1:} Compact Runtime Evidence\\[1pt]
-			\textbf{Task 2.2:} RTOS Interrupt \& Multitask Attestation\par}
+			\textbf{Task 2.1:} Compact and Low-Overhead Runtime Evidence\\[0pt]
+			\textbf{Task 2.2:} Interrupt-Driven \& Multitasking Attestation\par}
 		};
-		\node[thrust, fill=violet!8, right=6mm of t2] (t3) {
-			\textbf{Thrust 3: Evidence-Guided\\Trust Containment and Recovery}\\[1pt]
+		\node[thrust, text width=6.0cm, inner sep=3pt, fill=violet!8, right=4mm of t2] (t3) {
+			\textbf{Thrust 3: Evidence-Guided\\Trust Containment and Recovery}\\[0pt]
 			{\scriptsize\raggedright
-			\textbf{Task 3.1:} Data-Flow Aware Partitioning\\[1pt]
-			\textbf{Task 3.2:} Interrupt \& DMA Isolation\\[1pt]
-			\textbf{Task 3.3:} Containment \& Recovery\par}
+			\textbf{Task 3.1:} Real-Time-/Data-Flow-Aware, Interrupt-Safe Compartmentalization\\[0pt]
+			\textbf{Task 3.2:} Ambiguity-Guided Data-Flow Integrity\\[0pt]
+			\textbf{Task 3.3:} Evidence-Guided Containment \& Recovery\par}
 		};
 		\node[font=\scriptsize, above=0mm of t1] {\emph{TEE: Verifying Trust Anchor}};
 		\node[font=\scriptsize, above=0mm of t2] {\emph{REE: Firmware Runtime Evidence}};
